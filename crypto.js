@@ -1,0 +1,53 @@
+/* Forge Gym: shared helpers for member codes and encrypted portal records.
+   A member code is turned into (id, key) with PBKDF2. The id is public (it names the record in portal.json),
+   the key decrypts the record. Without the code, portal.json shows nothing readable. */
+(function (g) {
+  var ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; /* 32 symbols, no 0/O/1/I */
+  var SALT = 'forge-gym-v1';
+  var ITER = 100000;
+
+  function toB64(bytes) {
+    var s = '';
+    for (var i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function fromB64(b64) {
+    var s = atob(b64), out = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  function hex(bytes) {
+    var h = '';
+    for (var i = 0; i < bytes.length; i++) h += (bytes[i] < 16 ? '0' : '') + bytes[i].toString(16);
+    return h;
+  }
+
+  function genCode() {
+    var b = new Uint8Array(10), s = '';
+    g.crypto.getRandomValues(b);
+    for (var i = 0; i < 10; i++) s += ALPHA[b[i] & 31];
+    return s.slice(0, 5) + '-' + s.slice(5);
+  }
+  function normCode(c) { return String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+  async function derive(code) {
+    var enc = new TextEncoder();
+    var km = await g.crypto.subtle.importKey('raw', enc.encode(normCode(code)), 'PBKDF2', false, ['deriveBits']);
+    var bits = new Uint8Array(await g.crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: enc.encode(SALT), iterations: ITER, hash: 'SHA-256' }, km, 512));
+    var key = await g.crypto.subtle.importKey('raw', bits.slice(32, 64), 'AES-GCM', false, ['encrypt', 'decrypt']);
+    return { id: hex(bits.slice(0, 16)), key: key };
+  }
+
+  async function encrypt(obj, key) {
+    var iv = g.crypto.getRandomValues(new Uint8Array(12));
+    var ct = new Uint8Array(await g.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj))));
+    return { iv: toB64(iv), d: toB64(ct) };
+  }
+  async function decrypt(rec, key) {
+    var pt = await g.crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.iv) }, key, fromB64(rec.d));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+
+  g.FG = { genCode: genCode, normCode: normCode, derive: derive, encrypt: encrypt, decrypt: decrypt };
+})(typeof window !== 'undefined' ? window : globalThis);
