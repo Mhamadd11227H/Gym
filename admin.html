@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ckb" dir="rtl">
+<html lang="ku" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0b0909">
-<title>Forge Gym | خاوەن</title>
+<title>Forge Gym | خودان</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Noto+Kufi+Arabic:wght@600;800&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,27 +13,78 @@
 </head>
 <body>
 
+<!-- گەیتێ تۆکنی: هەتا تۆکن نەهێتە نڤیسین و پشتڕاست کرن، تنێ ڤێ بەشێ دیار دبیت -->
+<div class="wrap narrow" id="gate">
+  <header class="top">
+    <div class="brand"><i></i><div>FORGE<small>GYM</small></div></div>
+  </header>
+  <section class="login">
+    <h1>بەشێ خودانی</h1>
+    <p>بۆ ڤەکرنا ڤێ لاپەڕێ، تۆکنا GitHub بنڤیسە. هەتا تۆکن نەهێتە نڤیسین چ تشت ناهێتە نیشادان.</p>
+    <form id="gateForm" novalidate>
+      <label for="gToken">تۆکن (Token)</label>
+      <input id="gToken" class="f" type="password" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" spellcheck="false">
+
+      <details class="how" id="gDetails">
+        <summary>ڕێکخستنێن GitHub (ناڤێ بەکارهێنەری و Repository)</summary>
+        <label for="gOwner">ناڤێ بەکارهێنەرێ GitHub</label>
+        <input id="gOwner" class="f" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <label for="gRepo">ناڤێ Repository</label>
+        <input id="gRepo" class="f" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <label for="gBranch">Branch</label>
+        <input id="gBranch" class="f" value="main" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </details>
+
+      <label class="remember"><input id="gRemember" type="checkbox"> تۆکنێ ل سەر ڤی ئامێری بپارێزە (نە پێشنیارکرییە)</label>
+      <div class="err" id="gErr" role="alert"></div>
+      <button class="btn-add wide" id="gBtn" type="submit">چوونە ژوورڤە</button>
+    </form>
+
+    <details class="how">
+      <summary>تۆکن چاوا چێ دبیت؟</summary>
+      <ol>
+        <li>بچە GitHub ← وێنەیێ پرۆفایلی ← Settings ← Developer settings</li>
+        <li>Personal access tokens ← Fine-grained tokens ← Generate new token</li>
+        <li>Expiration: 1 year. د Repository access دا تنێ ڕیپۆیێ ڤی سایتی هەلبژێرە</li>
+        <li>د Permissions ← Repository permissions ← <b>Contents</b> بکە <b>Read and write</b></li>
+        <li>Generate token، پاشی کۆپی بکە و لێرە دانە.</li>
+      </ol>
+    </details>
+  </section>
+</div>
+
+<!-- لاپەڕێ سەرەکی: تا گەیت ڤەنەبیت هەر ڤەشارتی دمینیت -->
+<div id="app" hidden>
 <div class="wrap">
   <header class="top">
     <div class="brand"><i></i><div>FORGE<small>GYM</small></div></div>
     <div class="top-acts">
-      <button class="pill" id="pill" type="button">بڵاو نەکراوەتەوە</button>
-      <button class="btn-add" id="btnAdd" type="button">+ ئەندامی نوێ</button>
+      <button class="pill" id="pill" type="button">نەهاتیە بەلاڤکرن</button>
+      <button class="btn-add" id="btnAdd" type="button">+ ئەندامێ نوی</button>
+      <button class="btn-lock" id="btnLock" type="button">دەرکەفتن</button>
     </div>
   </header>
 
+  <div class="bkbar" id="bkbar" hidden>
+    <span id="bkText"></span>
+    <span class="bk-acts">
+      <button type="button" id="bkCloud">پاراستن ل GitHub</button>
+      <button type="button" id="bkBtn">کۆپیکرن ئێستا</button>
+    </span>
+  </div>
+
   <section class="stats" aria-label="ئامار">
-    <div class="stat"><span>کۆی ئەندامان</span><b id="sTotal">0</b></div>
-    <div class="stat ok"><span>پارەی داوە</span><b id="sPaid">0</b></div>
-    <div class="stat red"><span>پارەی نەداوە</span><b id="sUnpaid">0</b></div>
-    <div class="stat"><span>کۆی وەرگیراو</span><b id="sSum">0<em>د.ع</em></b></div>
+    <div class="stat"><span>کۆمێ ئەندامان</span><b id="sTotal">0</b></div>
+    <div class="stat ok"><span>پارە دایە</span><b id="sPaid">0</b></div>
+    <div class="stat red"><span>پارە نەدایە</span><b id="sUnpaid">0</b></div>
+    <div class="stat"><span>کۆمێ پارەیێ وەرگرتی</span><b id="sSum">0<em>د.ع</em></b></div>
   </section>
 
   <section class="desk">
     <div class="search">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input id="q" type="search" autocomplete="off" placeholder="ناوی ئەو کەسەی هاتووە بنووسە…" aria-label="گەڕان بە ناو">
-      <button class="clear" id="qClear" type="button" aria-label="پاککردنەوە" hidden>✕</button>
+      <input id="q" type="search" autocomplete="off" placeholder="ناڤێ وی کەسێ هاتی بنڤیسە…" aria-label="گەڕیان ب ناڤ">
+      <button class="clear" id="qClear" type="button" aria-label="پاقژکرن" hidden>✕</button>
     </div>
     <div class="chips" id="chips"></div>
   </section>
@@ -43,93 +94,89 @@
   </main>
 
   <footer class="foot">
-    <p class="sync">ئەم لاپەڕەیە تەنها بۆ خاوەنە. تۆمارەکان لەم ئامێرەدا دەمێننەوە. بەشی ئەندامان (index.html) بە کۆدی تایبەت و کۆدکراوی بڵاو دەکرێتەوە.</p>
+    <p class="sync">ئەڤ لاپەڕە تنێ بۆ خودانییە. تۆمار تنێ د ڤی ئامێری دا دمینن، ژ بەر هندێ دەمەک دەمەک کۆپیەکێ ڤەگرە. بەشێ ئەندامان (index.html) ب کۆدێ تایبەت و کۆدکری دهێتە بەلاڤکرن.</p>
     <div class="tools">
-      <button type="button" id="btnSettings">ڕێکخستنی بڵاوکردنەوە</button>
-      <button type="button" id="btnExport">کۆپیکردنی تۆمارەکان</button>
-      <button type="button" id="btnImport">گەڕاندنەوەی کۆپی</button>
+      <button type="button" id="btnCloud">پاراستن و ڤەگەڕاندن ل GitHub</button>
+      <button type="button" id="btnExport">کۆپیکرنا تۆمارا</button>
+      <button type="button" id="btnImport">ڤەگەڕاندنا کۆپیێ</button>
       <input type="file" id="fileImport" accept="application/json,.json" hidden>
     </div>
   </footer>
 </div>
 
-<!-- member form -->
+<!-- فۆرما ئەندامی -->
 <div class="veil" id="veil" hidden>
   <form class="sheet" id="form" role="dialog" aria-modal="true" aria-labelledby="fTitle" novalidate>
-    <h2 id="fTitle">ئەندامی نوێ</h2>
-    <label for="fName">ناو *</label>
+    <h2 id="fTitle">ئەندامێ نوی</h2>
+    <label for="fName">ناڤ *</label>
     <input id="fName" autocomplete="off">
     <div class="two">
-      <div><label for="fAmount">نرخی دراو (دینار) *</label><input id="fAmount" class="ltr" type="number" inputmode="numeric" min="0" step="500"></div>
+      <div><label for="fAmount">نرخێ پارەی (دینار) *</label><input id="fAmount" class="ltr" type="number" inputmode="numeric" min="0" step="500"></div>
       <div><label for="fMonths">ماوە</label>
         <select id="fMonths">
-          <option value="1">1 مانگ</option>
-          <option value="3">3 مانگ</option>
-          <option value="6">6 مانگ</option>
-          <option value="12">ساڵێک</option>
+          <option value="1">1 هەیڤ</option>
+          <option value="3">3 هەیڤ</option>
+          <option value="6">6 هەیڤ</option>
+          <option value="12">ساڵەک</option>
         </select>
       </div>
     </div>
     <div class="two">
-      <div><label for="fPhone">ژمارەی مۆبایل</label><input id="fPhone" class="ltr" type="tel" inputmode="tel" autocomplete="off"></div>
-      <div><label for="fStart">بەرواری دەستپێک</label><input id="fStart" class="ltr" type="date"></div>
+      <div><label for="fPhone">ژمارا مۆبایلێ</label><input id="fPhone" class="ltr" type="tel" inputmode="tel" autocomplete="off"></div>
+      <div><label for="fStart">بەرواری دەستپێکرنێ</label><input id="fStart" class="ltr" type="date"></div>
     </div>
-    <label for="fNote">تێبینی (تەنها بۆ تۆ)</label>
+    <label for="fNote">تێبینی (تنێ بۆ تە)</label>
     <textarea id="fNote"></textarea>
 
-    <label for="fCode">کۆدی ئەندام (بۆ چوونەژوورەوە)</label>
+    <label for="fCode">کۆدێ ئەندامی (بۆ چوونە ژوورڤە)</label>
     <div class="codebox">
-      <input id="fCode" class="ltr mono" readonly>
-      <button type="button" id="fNewCode">کۆدی نوێ</button>
+      <input id="fCode" class="ltr mono" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30" placeholder="ABC12345">
+      <button type="button" id="fNewCode">کۆدەکێ ڕێکەفتی</button>
     </div>
+    <small class="sub">تو دشێی کۆدەکێ ب دلێ خۆ بنڤیسی: تنێ پیتێن ئینگلیزی (A-Z) و ژمارە (0-9)، ژ 8 هەتا 24. ناڤ و ژمارا مۆبایلێ بکارنەهینە.</small>
+    <div class="codehint" id="fCodeHint" aria-live="polite"></div>
 
     <div class="plan-h">
-      <span>خشتەی راهێنان</span>
-      <select id="fCopy" aria-label="کۆپی خشتە لە ئەندامێکی تر"><option value="">کۆپی لە ئەندامێکی تر…</option></select>
+      <span>خشتەیا ڕاهێنانێ</span>
+      <select id="fCopy" aria-label="کۆپیکرنا خشتەیێ ژ ئەندامەکێ دی"><option value="">کۆپی ژ ئەندامەکێ دی…</option></select>
     </div>
     <div id="fPlan" class="planed"></div>
-    <button type="button" class="addday" id="fAddDay">+ ڕۆژی نوێ</button>
+    <button type="button" class="addday" id="fAddDay">+ ڕۆژا نوی</button>
 
     <div class="pay">
-      <div class="seg" id="fPay" role="group" aria-label="دۆخی پارەدان">
-        <button type="button" class="no on" data-v="0">پارەی نەداوە</button>
-        <button type="button" class="yes" data-v="1">پارەی داوە</button>
+      <div class="seg" id="fPay" role="group" aria-label="دۆخێ پارەدانێ">
+        <button type="button" class="no on" data-v="0">پارە نەدایە</button>
+        <button type="button" class="yes" data-v="1">پارە دایە</button>
       </div>
     </div>
     <div class="err" id="fErr" role="alert"></div>
     <div class="sheet-acts">
-      <button type="submit" class="go" id="fSave">پاشەکەوت</button>
-      <button type="button" class="cancel" id="fCancel">پاشگەزبوونەوە</button>
+      <button type="submit" class="go" id="fSave">پاشەکەفت</button>
+      <button type="button" class="cancel" id="fCancel">پاشگەز بوون</button>
     </div>
   </form>
 </div>
 
-<!-- publish settings -->
-<div class="veil" id="veil2" hidden>
-  <form class="sheet" id="gform" role="dialog" aria-modal="true" aria-labelledby="gTitle" novalidate>
-    <h2 id="gTitle">بڵاوکردنەوەی بەشی ئەندامان</h2>
-    <p class="muted-p">بۆ ئەوەی ئەندامەکان بتوانن بە کۆدی خۆیان خشتە و ماوەکەیان ببینن، ئەم لاپەڕەیە دەبێت فایلی <b dir="ltr">portal.json</b> لە GitHub نوێ بکاتەوە. تەنها یەکجار ڕێکی بخە.</p>
-    <label for="gOwner">ناوی بەکارهێنەری GitHub</label><input id="gOwner" class="ltr" autocomplete="off">
-    <label for="gRepo">ناوی Repository</label><input id="gRepo" class="ltr" autocomplete="off">
-    <label for="gBranch">Branch</label><input id="gBranch" class="ltr" value="main" autocomplete="off">
-    <label for="gToken">تۆکن (Token)</label><input id="gToken" class="ltr" type="password" placeholder="github_pat_..." autocomplete="off">
-    <details class="how">
-      <summary>تۆکن چۆن دروست دەکرێت؟</summary>
-      <ol>
-        <li>بچۆ GitHub ← وێنەی پرۆفایل ← Settings ← Developer settings</li>
-        <li>Personal access tokens ← Fine-grained tokens ← Generate new token</li>
-        <li>Expiration: 1 year. لە Repository access تەنها ڕیپۆی ئەم سایتە هەڵبژێرە</li>
-        <li>لە Permissions ← Repository permissions ← <b>Contents</b> بکە بە <b>Read and write</b></li>
-        <li>Generate token، دواتر کۆپی بکە و لێرە دایبنێ.</li>
-      </ol>
-    </details>
-    <div class="err" id="gErr" role="alert"></div>
-    <div class="sheet-acts">
-      <button type="submit" class="go" id="gSave">پاشەکەوت و بڵاوکردنەوە</button>
-      <button type="button" class="cancel" id="gCancel">داخستن</button>
+<!-- پاراستنا کۆدکری ل GitHub -->
+<div class="veil" id="veil3" hidden>
+  <form class="sheet" id="bform" role="dialog" aria-modal="true" aria-labelledby="bTitle" novalidate>
+    <h2 id="bTitle">پاراستنا تۆمارا ل GitHub</h2>
+    <p class="muted-p">تۆمارێن ئەندامان ب پاسۆردەکێ دهێنە کۆدکرن و ل Repository وەک فایلێ <b dir="ltr">forge-backup.json</b> دهێنە پاراستن. ئەگەر مۆبایل یان براوزەر بهێتە گوهۆڕین، ب ڤی پاسۆردی دشێی هەمیان ڤەگەڕینی. پشتی جارا یەکێ، هەر جارەکا تو بگوهۆڕی دێ ئۆتۆماتیک دووبارە هێتە پاراستن.</p>
+    <label for="bPass">پاسۆردێ پاراستنێ (کێم 10 پیت و ژمارە)</label>
+    <input id="bPass" class="ltr" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div id="bConfirmBox">
+      <label for="bPass2">پاسۆردی دووبارە بنڤیسە</label>
+      <input id="bPass2" class="ltr" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
     </div>
-    <button type="button" class="linkbtn" id="gForget" hidden>سڕینەوەی تۆکن لەم ئامێرە</button>
+    <p class="muted-p warnp">ئاگەهداری: ئەگەر پاسۆردی ژبیر بکەی، کەس ناشێت کۆپیێ ڤەکەت. ل جهەکێ ب ئاسایش بنڤیسە. ئەڤ پاسۆرد ژ تۆکنا GitHub جیاوازە.</p>
+    <div class="err" id="bErr" role="alert"></div>
+    <div class="sheet-acts">
+      <button type="submit" class="go" id="bSave">پاراستن ئێستا</button>
+      <button type="button" class="cancel" id="bClose">داخستن</button>
+    </div>
+    <div class="tools" style="margin-top:14px"><button type="button" id="bRestore">ڤەگەڕاندن ژ کۆپیا GitHub</button></div>
   </form>
+</div>
 </div>
 
 <div class="toast" id="toast" hidden></div>

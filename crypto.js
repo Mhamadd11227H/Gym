@@ -49,5 +49,24 @@
     return JSON.parse(new TextDecoder().decode(pt));
   }
 
-  g.FG = { genCode: genCode, normCode: normCode, derive: derive, encrypt: encrypt, decrypt: decrypt };
+  /* password-based encryption, used for the encrypted backup file (forge-backup.json) */
+  async function passKey(pass, salt) {
+    var enc = new TextEncoder();
+    var km = await g.crypto.subtle.importKey('raw', enc.encode(String(pass)), 'PBKDF2', false, ['deriveKey']);
+    return g.crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 310000, hash: 'SHA-256' }, km,
+      { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  async function encryptPass(obj, pass) {
+    var salt = g.crypto.getRandomValues(new Uint8Array(16)), iv = g.crypto.getRandomValues(new Uint8Array(12));
+    var key = await passKey(pass, salt);
+    var ct = new Uint8Array(await g.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj))));
+    return { s: toB64(salt), iv: toB64(iv), d: toB64(ct) };
+  }
+  async function decryptPass(rec, pass) {
+    var key = await passKey(pass, fromB64(rec.s));
+    var pt = await g.crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(rec.iv) }, key, fromB64(rec.d));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+
+  g.FG = { encryptPass: encryptPass, decryptPass: decryptPass, genCode: genCode, normCode: normCode, derive: derive, encrypt: encrypt, decrypt: decrypt };
 })(typeof window !== 'undefined' ? window : globalThis);

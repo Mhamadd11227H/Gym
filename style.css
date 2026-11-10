@@ -226,3 +226,26 @@ button{cursor:pointer;border:0;background:none}
 .day-card li::before{content:counter(ex);flex:none;min-width:22px;font-family:var(--font-display);font-weight:500;color:var(--red)}
 .day-card .muted{padding:0 16px 14px;margin:0;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== v2 additions: owner gate, free-choice codes, backup reminder ===== */
+.codein{font-size:22px;letter-spacing:3px}
+.codein::placeholder{letter-spacing:3px}
+.login .f{display:block;width:100%;margin:0 0 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-size:16px;direction:ltr;text-align:start}
+.login .f:focus{border-color:var(--red);outline:0}
+.login .how{margin:0 0 14px}
+.login .how .f{margin-top:10px;margin-bottom:0}
+.login .how .f+label{margin-top:12px}
+.btn-lock{padding:9px 16px;border:1px solid var(--line);border-radius:8px;color:var(--fg);font-size:13.5px;font-weight:500;background:var(--surface)}
+.btn-lock:hover{border-color:var(--red)}
+.codehint{min-height:20px;margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+.codehint.ok{color:var(--ok)}
+.codehint.bad{color:#ff6b75}
+.sheet .sub{display:block;margin-top:4px;font-size:12.5px;color:var(--muted)}
+.sheet .codebox input{text-transform:uppercase}
+.bkbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:12px 16px;background:rgba(242,163,58,.1);border:1px solid var(--warn);border-radius:10px;font-size:13.5px;color:var(--warn)}
+.bkbar button{flex:none;padding:8px 16px;border-radius:8px;background:var(--warn);color:#190c0c;font-weight:700;font-size:13.5px}
+
+.bk-acts{display:flex;gap:8px;flex-wrap:wrap}
+.bk-acts button{background:var(--warn)}
+.warnp{color:var(--warn)}
+#bConfirmBox[hidden]{display:none}

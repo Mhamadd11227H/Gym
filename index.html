@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ckb" dir="rtl">
+<html lang="ku" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0909">
-<title>Forge Gym | ئەندامان</title>
+<title>Forge Gym | ئەندام</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Noto+Kufi+Arabic:wght@600;800&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,24 +15,24 @@
 <div class="wrap narrow">
   <header class="top">
     <div class="brand"><i></i><div>FORGE<small>GYM</small></div></div>
-    <button class="ghost" id="btnOut" type="button" hidden>دەرچوون</button>
+    <button class="ghost" id="btnOut" type="button" hidden>دەرکەفتن</button>
   </header>
 
-  <!-- login -->
+  <!-- چوونە ژوورڤە -->
   <section class="login" id="login">
-    <h1>چوونەژوورەوەی ئەندامان</h1>
-    <p>کۆدە تایبەتییەکەت بنووسە بۆ بینینی خشتەی راهێنان و ئەوەی ماوەی ئەندامێتیت کەی تەواو دەبێت.</p>
+    <h1>چوونە ژوورڤەیا ئەندامان</h1>
+    <p>کۆدێ خۆ یێ تایبەت بنڤیسە دا خشتەیا ڕاهێنانێ ببینی و بزانی ماوەیا ئەندامەتیا تە کەنگێ ب دوماهی دهێت.</p>
     <form id="loginForm" novalidate>
-      <label for="code">کۆدی تایبەت</label>
-      <input id="code" class="codein" type="text" dir="ltr" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX" maxlength="14">
-      <label class="remember"><input id="remember" type="checkbox" checked> لەسەر ئەم ئامێرە بمێنێتەوە</label>
+      <label for="code">کۆدێ تایبەت</label>
+      <input id="code" class="codein" type="text" dir="ltr" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX" maxlength="30">
+      <label class="remember"><input id="remember" type="checkbox" checked> ل سەر ڤی ئامێری بمینیت</label>
       <div class="err" id="loginErr" role="alert"></div>
-      <button class="btn-add wide" id="loginBtn" type="submit">چوونەژوورەوە</button>
+      <button class="btn-add wide" id="loginBtn" type="submit">چوونە ژوورڤە</button>
     </form>
-    <p class="hint">کۆدەکەت لە لایەن مەربیی قاعەکەوە پێت دەدرێت.</p>
+    <p class="hint">کۆدێ تە ژ لایێ ڕاهێنەرێ قاعێ ڤە دهێتە دان. تنێ پیتێن ئینگلیزی و ژمارە.</p>
   </section>
 
-  <!-- member view -->
+  <!-- ڕووپەلێ ئەندامی -->
   <section id="me" hidden>
     <h2 class="hello" id="hello"></h2>
 
@@ -41,16 +41,16 @@
         <span class="tag" id="pcTag"></span>
         <span class="tag" id="pcPaid"></span>
       </div>
-      <div class="pc-days"><b id="pcDays">0</b><span id="pcLabel">ڕۆژ ماوە</span></div>
+      <div class="pc-days"><b id="pcDays">0</b><span id="pcLabel">ڕۆژ ماینە</span></div>
       <div class="bar" aria-hidden="true"><i id="pcBar"></i></div>
       <dl class="pc-dates">
         <div><dt>دەستپێک</dt><dd id="pcStart"></dd></div>
-        <div><dt>تەواوبوون</dt><dd id="pcEnd"></dd></div>
+        <div><dt>ب دوماهی هاتن</dt><dd id="pcEnd"></dd></div>
       </dl>
       <p class="pc-warn" id="pcWarn" hidden></p>
     </div>
 
-    <h3 class="sec">خشتەی راهێنان</h3>
+    <h3 class="sec">خشتەیا ڕاهێنانێ</h3>
     <div class="days" id="days"></div>
   </section>
 </div>
