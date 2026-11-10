@@ -141,3 +141,9 @@ body:has(#login:not([hidden])) .top .brand{visibility:hidden}
 .gstat.closed{border-color:rgba(255,90,95,.5)}.gstat.closed i{background:var(--bad);animation:none}.gstat.closed b{color:var(--bad)}
 .gstat.open{border-color:rgba(95,211,154,.4)}
 @keyframes gpulse{0%{box-shadow:0 0 0 0 rgba(95,211,154,.6)}70%,100%{box-shadow:0 0 0 10px rgba(95,211,154,0)}}
+
+/* ===== v3: تابێن ئەندامی ===== */
+.ptabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:0 0 16px;border:1px solid var(--line);border-radius:12px;background:var(--plate)}
+.ptabs button{padding:11px 8px;border-radius:9px;color:var(--muted);font-family:var(--f-head);font-weight:800;font-size:15px;transition:background .2s,color .2s}
+.ptabs button.on{background:linear-gradient(180deg,var(--hot),var(--ember));color:#1a0c04;box-shadow:0 6px 22px -8px rgba(255,106,31,.8)}
+.sec{margin-top:4px}

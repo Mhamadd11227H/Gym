@@ -44,6 +44,7 @@
     $('#me').hidden = false;
     $('#btnOut').hidden = false;
     $('#hello').textContent = 'سلاڤ، ' + p.n;
+    setPV('card');
 
     var today = parseISO(todayISO());
     var end = parseISO(p.e), start = parseISO(p.s);
@@ -118,19 +119,27 @@
     showLogin();
   });
 
-  /* gym open / closed, set by the owner (status.json is public) */
-  async function showStatus() {
+  /* دوو بەش: ئەندامەتی و خشتەیا ڕاهێنانێ، هەر ئێک لاپەڕەکا جیایە */
+  function setPV(v) {
+    document.querySelectorAll('[data-pv]').forEach(function (el) { el.hidden = el.dataset.pv !== v; });
+    document.querySelectorAll('#ptabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.p === v); });
+  }
+  $('#ptabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setPV(b.dataset.p); });
+
+  /* دۆخێ قاعێ (کراوە / گرتی) ژ status.json دهێت، خودان ژ پانێلی دگوهۆڕیت.
+     پێشتر ڤێ بەشێ چ کار نەدکر چنکو چ کۆدەکێ نەدخواند */
+  (async function () {
     try {
       var r = await fetch('status.json?t=' + Date.now(), { cache: 'no-store' });
       if (!r.ok) return;
-      var j = await r.json(), el = $('#gstat');
-      el.className = 'gstat ' + (j.o ? 'open' : 'closed');
-      $('#gstatT').textContent = j.o ? 'قاعە ئێستا کراوەیە' : 'قاعە ئێستا گرتیە';
-      $('#gstatM').textContent = j.m || ''; $('#gstatM').hidden = !j.m;
-      el.hidden = false;
-    } catch (e) {}
-  }
-  showStatus(); setInterval(showStatus, 60000);
+      var j = await r.json(), open = !!j.o, g = $('#gstat');
+      g.className = 'gstat ' + (open ? 'open' : 'closed');
+      $('#gstatT').textContent = open ? 'قاعە ئێستا کراوەیە' : 'قاعە ئێستا گرتیە';
+      $('#gstatM').textContent = j.m || '';
+      $('#gstatM').hidden = !j.m;
+      g.hidden = false;
+    } catch (e) { /* ئەگەر status.json نەبیت، بانەر ڤەشارتی دمینیت */ }
+  })();
 
   /* start: link with #CODE, or the code saved on this device */
   (async function () {

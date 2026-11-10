@@ -134,7 +134,7 @@
     $('#app').hidden = false;
     $('#gToken').value = '';
     $('#gErr').textContent = '';
-    load(); render(); setPub('idle'); armIdle(); loadStatus();
+    load(); render(); setPub('idle'); armIdle(); loadStatus(); setTab(location.hash.slice(1));
   }
 
   function lock(msg) {
@@ -362,7 +362,7 @@
       list.innerHTML = rows.map(card).join('');
     }
     $('#qClear').hidden = !q;
-    backupBar(); renderStatus(); renderAttn(); renderLogBadge();
+    backupBar(); renderStatus(); renderAttn(); renderLogBadge(); renderToday(); renderMoney();
   }
 
   function card(m) {
@@ -405,6 +405,10 @@
   /* ---------- actions ---------- */
   function setPaid(id, val) {
     var m = find(id); if (!m || !!m.paid === val) return;
+    if (pays === null) renderMoney();   /* تۆمارا پارەدانان ئامادە بکە */
+    if (val) pays.push({ d: todayISO(), a: Number(m.amount) || 0, n: m.name });
+    else { for (var z = pays.length - 1; z >= 0; z--) if (pays[z].n === m.name) { pays.splice(z, 1); break; } }
+    jset(LSP, pays);
     save(Object.assign({}, m, { paid: val, paidAt: val ? todayISO() : null }));
     logEv(val ? 'ok' : 'warn', m.name + (val ? ': پارەدان هاتە تۆمارکرن (' + fmt(m.amount) + ' دینار)' : ': وەک پارە نەدایی هاتە دانان'));
     toast(val ? 'پارەدان هاتە تۆمارکرن' : 'وەک پارە نەدایی هاتە دانان');
@@ -501,6 +505,7 @@
       paidAt: paid ? ((old && old.paid && old.paidAt) || todayISO()) : null,
       createdAt: old ? (old.createdAt || Date.now()) : Date.now()
     }));
+    if (paid && !(old && old.paid)) { if (pays === null) renderMoney(); pays.push({ d: todayISO(), a: amount, n: name }); jset(LSP, pays); }
     logEv(old ? 'hot' : 'ok', old ? 'زانیاریێن ' + name + ' هاتنە گوهۆڕین' : 'ئەندامێ نوی هاتە زێدەکرن: ' + name);
     closeForm();
     toast(old ? 'گوهورین هاتنە پاشەکەفتکرن' : 'ئەندام هاتە تۆمارکرن');
@@ -586,7 +591,7 @@
     return r.text();
   }
   async function cloudBackup(pass) {
-    var rec = await FG.encryptPass({ v: 1, at: Date.now(), members: members, log: log }, pass);
+    var rec = await FG.encryptPass({ v: 1, at: Date.now(), members: members, log: log, exp: expenses, pays: pays }, pass);
     await putFile('forge-backup.json', JSON.stringify(Object.assign({ v: 1 }, rec)), 'Update encrypted backup');
   }
   async function cloudExists() {
@@ -649,6 +654,8 @@
       try { obj = await FG.decryptPass(JSON.parse(raw), p); }
       catch (x) { err.textContent = 'پاسۆرد خەلەتە، یان فایل خەرابە.'; cloudBusy(false); return; }
       var n = mergeMembers(Array.isArray(obj.members) ? obj.members : []);
+      if (Array.isArray(obj.exp)) { expenses = obj.exp; jset(LSX, expenses); }
+      if (Array.isArray(obj.pays)) { pays = obj.pays; jset(LSP, pays); }
       if (Array.isArray(obj.log)) { var seen = {}; log.forEach(function (e) { seen[e.t + e.x] = 1; }); obj.log.forEach(function (e) { if (e && !seen[e.t + e.x]) log.push(e); }); log.sort(function (a, b) { return b.t - a.t; }); log.length = Math.min(log.length, 300); jset(LSL, log); }
       logEv('ok', n + ' ئەندام ژ کۆپیا GitHub هاتنە ڤەگەڕاندن');
       persist(); render(); schedulePublish();
@@ -732,7 +739,7 @@
   $('#logClose').addEventListener('click', closeLog);
   $('#veil4').addEventListener('click', function (e) { if (e.target === this) closeLog(); });
   $('#resX').addEventListener('click', function () { $('#res').hidden = true; });
-  $('#attn').addEventListener('click', function (e) { var b = e.target.closest('.at'); if (!b) return; filter = b.dataset.f; render(); $('#list').scrollIntoView({ behavior: 'smooth' }); });
+  $('#attn').addEventListener('click', function (e) { var b = e.target.closest('.at'); if (!b) return; filter = b.dataset.f; render(); setTab('members'); });
   $('#gsSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var o = b.dataset.st === 'open'; if (o === gstat.open) return; stAsk = o; renderStatus(); });
   $('#gsYes').addEventListener('click', function () { setStatus(stAsk); });
   $('#gsNo').addEventListener('click', function () { stAsk = null; renderStatus(); });
@@ -805,6 +812,69 @@
   $('#btnExport').addEventListener('click', exportData);
   $('#btnImport').addEventListener('click', function () { $('#fileImport').click(); });
   $('#fileImport').addEventListener('change', function (e) { importData(e.target.files[0]); e.target.value = ''; });
+
+  /* ---------- لاپەڕێن جیا (تاب) ---------- */
+  /* خەرجی و تۆمارا پارەدانان د ڤی ئامێری دا دمینن و د کۆپیا GitHub دا دچن */
+  var LSX = 'forge_gym_expenses_v1', LSP = 'forge_gym_pays_v1';
+  var expenses = jget(LSX, []), pays = jget(LSP, null);
+  var TABS = ['home', 'members', 'money', 'more'];
+
+  /* تابێ هەلبژارتی نیشان بدە و یێن دی ڤەشێرە */
+  function setTab(t) {
+    if (TABS.indexOf(t) < 0) t = 'home';
+    document.querySelectorAll('[data-view]').forEach(function (el) { el.classList.toggle('vhide', el.dataset.view !== t); });
+    document.querySelectorAll('#tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.t === t); });
+    try { history.replaceState(null, '', '#' + t); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+
+  /* ئەو ئەندامێن ئەڤرو هاتینە */
+  function renderToday() {
+    var t = members.filter(function (m) { return m.lastVisit === todayISO(); });
+    $('#today').innerHTML = '<h3>ئەڤرو هاتینە <b>' + t.length + '</b></h3>' +
+      (t.length ? '<div>' + t.map(function (m) { return '<span>' + esc(m.name) + '</span>'; }).join('') + '</div>' : '<p>هێشتا کەس ئەڤرو نەهاتیە. دوگمەیا «چووە ژوور» ل سەر کارتێ ئەندامی بکە.</p>');
+  }
+
+  /* کۆمێ پارەیێ هەیڤەکێ (key = 2026-11) */
+  function sumBy(list, key) {
+    return list.filter(function (p) { return String(p.d).slice(0, 7) === key; }).reduce(function (s, p) { return s + (Number(p.a) || 0); }, 0);
+  }
+
+  /* داهات (پارەدان) ــ خەرجی = پوخت، بۆ 3 هەیڤێن دوماهیێ */
+  function renderMoney() {
+    if (pays === null) {   /* جارا یەکێ: ژ ئەندامێن پارە داین تۆمارەکێ چێ بکە */
+      pays = members.filter(function (m) { return m.paid && m.paidAt; }).map(function (m) { return { d: m.paidAt, a: Number(m.amount) || 0, n: m.name }; });
+      jset(LSP, pays);
+    }
+    var now = new Date(), cards = '';
+    for (var k = 0; k < 3; k++) {
+      var key = toISO(new Date(now.getFullYear(), now.getMonth() - k, 1)).slice(0, 7);
+      var inc = sumBy(pays, key), out = sumBy(expenses, key), net = inc - out;
+      cards += '<div class="mc' + (k ? '' : ' cur') + '"><small>' + (k ? key : 'ئەڤ هەیڤە (' + key + ')') + '</small><dl>' +
+        '<div><dt>داهات</dt><dd class="g">' + fmt(inc) + '</dd></div>' +
+        '<div><dt>خەرجی</dt><dd class="r">' + fmt(out) + '</dd></div>' +
+        '<div><dt>پوخت</dt><dd class="' + (net < 0 ? 'r' : 'g') + '">' + fmt(net) + '</dd></div></dl></div>';
+    }
+    $('#mrep').innerHTML = cards;
+    var xs = expenses.slice().sort(function (a, b) { return b.t - a.t; }).slice(0, 30);
+    $('#xlist').innerHTML = xs.length ? xs.map(function (x) {
+      return '<div class="xi"><div><b>' + esc(x.n) + '</b><small>' + esc(x.d) + '</small></div><span>' + fmt(x.a) + ' د.ع</span><button type="button" data-x="' + x.t + '" aria-label="ژێبرن">✕</button></div>';
+    }).join('') : '<p class="muted-p">هێشتا چ خەرجی نەهاتینە تۆمارکرن.</p>';
+  }
+
+  $('#tabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setTab(b.dataset.t); });
+  $('#xform').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var n = $('#xT').value.trim(), a = Number($('#xA').value);
+    if (!n || !(a > 0)) { toast('ناڤ و نرخێ خەرجیێ بنڤیسە.', true); return; }
+    expenses.unshift({ t: Date.now(), d: todayISO(), n: n, a: a }); jset(LSX, expenses);
+    logEv('warn', 'خەرجی هاتە تۆمارکرن: ' + n + ' (' + fmt(a) + ' دینار)');
+    this.reset(); renderMoney(); toast('خەرجی هاتە تۆمارکرن');
+  });
+  $('#xlist').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-x]'); if (!b) return;
+    expenses = expenses.filter(function (x) { return String(x.t) !== b.dataset.x; }); jset(LSX, expenses); renderMoney();
+  });
 
   /* ---------- start ---------- */
   /* nothing from the panel is loaded or drawn here: only the gate is visible until the token is verified */

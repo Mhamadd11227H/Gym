@@ -37,7 +37,10 @@
   <!-- ڕووپەلێ ئەندامی -->
   <section id="me" hidden>
     <h2 class="hello" id="hello"></h2>
+    <!-- دوو لاپەڕێن جیا: ئەندامەتی و خشتە -->
+    <div class="ptabs" id="ptabs" role="tablist"><button type="button" class="on" data-p="card">ئەندامەتی</button><button type="button" data-p="plan">خشتەیا ڕاهێنانێ</button></div>
 
+    <div data-pv="card">
     <div class="pcard" id="pcard">
       <div class="pc-top">
         <span class="tag" id="pcTag"></span>
@@ -51,9 +54,12 @@
       </dl>
       <p class="pc-warn" id="pcWarn" hidden></p>
     </div>
+    </div>
 
+    <div data-pv="plan" hidden>
     <h3 class="sec">خشتەیا ڕاهێنانێ</h3>
     <div class="days" id="days"></div>
+    </div>
   </section>
 </div>
 
