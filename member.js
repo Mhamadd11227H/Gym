@@ -118,6 +118,20 @@
     showLogin();
   });
 
+  /* gym open / closed, set by the owner (status.json is public) */
+  async function showStatus() {
+    try {
+      var r = await fetch('status.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return;
+      var j = await r.json(), el = $('#gstat');
+      el.className = 'gstat ' + (j.o ? 'open' : 'closed');
+      $('#gstatT').textContent = j.o ? 'قاعە ئێستا کراوەیە' : 'قاعە ئێستا گرتیە';
+      $('#gstatM').textContent = j.m || ''; $('#gstatM').hidden = !j.m;
+      el.hidden = false;
+    } catch (e) {}
+  }
+  showStatus(); setInterval(showStatus, 60000);
+
   /* start: link with #CODE, or the code saved on this device */
   (async function () {
     var fromHash = FG.normCode(location.hash.slice(1));

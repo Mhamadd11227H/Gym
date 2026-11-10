@@ -1,0 +1,58 @@
+/* Forge Gym admin v3: graphite + ember (same look as the member portal). Loaded after style.css */
+:root{--bg:#0e1013;--surface:#171b21;--surface-2:#1f242c;--line:#2b323c;--fg:#f3efe9;--muted:#97a0ac;--red:#ff6a1f;--ok:#5fd39a;--warn:#ffb340;--bad:#ff5a5f;--hot:#ffd28c;--font-display:'Oswald','Noto Kufi Arabic',Impact,sans-serif}
+body{background:radial-gradient(70% 34% at 50% 115%,rgba(255,106,31,.25),transparent 70%),radial-gradient(50% 28% at 90% -5%,rgba(125,135,148,.14),transparent 70%),var(--bg) fixed}
+.brand i{background:linear-gradient(var(--hot),var(--red));box-shadow:0 0 16px rgba(255,106,31,.6)}
+.btn-add,.sheet-acts .go,.chip.on{background:linear-gradient(180deg,var(--hot),var(--red));color:#1a0c04;border-color:transparent;box-shadow:0 8px 26px -10px rgba(255,106,31,.8)}
+.btn-add:hover,.sheet-acts .go:hover{background:linear-gradient(180deg,#ffe0a8,#ff7a35)}
+.stat.red b{color:var(--bad)}.seg .no.on{background:var(--bad);color:#fff}.m::before{background:var(--bad)}.m.paid::before{background:var(--ok)}.m.soon::before{background:var(--warn)}.m.exp::before{background:#5c6573}
+.m{border-radius:14px;background:linear-gradient(160deg,var(--surface-2),var(--surface) 60%)}
+.m-name{font-size:20px}.m-amt b{color:var(--hot)}
+.stats{gap:10px;border:0;background:none;overflow:visible}
+.stat{border:1px solid var(--line)!important;border-radius:12px;background:linear-gradient(160deg,var(--surface-2),var(--surface))}
+.stat b{background:linear-gradient(180deg,#fff3dc,var(--hot) 45%,var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat.ok b{background-image:linear-gradient(180deg,#e6fff2,var(--ok))}.stat.red b{background-image:linear-gradient(180deg,#ffe3e4,var(--bad))}
+.btn-log{position:relative;padding:9px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:13.5px;font-weight:700}
+.btn-log:hover{border-color:var(--red)}
+.btn-log b{position:absolute;top:-8px;inset-inline-start:-8px;min-width:22px;height:22px;padding:0 5px;border-radius:99px;background:var(--bad);color:#fff;font:700 12px/22px var(--font-display);text-align:center}
+/* open / closed card */
+.gs{position:relative;overflow:hidden;margin:0 0 14px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(160deg,var(--surface-2),var(--surface) 65%)}
+.gs::after{content:"";position:absolute;inset:-60% auto auto -15%;width:60%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(95,211,154,.22),transparent 65%);pointer-events:none}
+.gs[data-s=closed]::after{background:radial-gradient(circle,rgba(255,90,95,.22),transparent 65%)}
+.gs>*{position:relative;z-index:1}
+.gs-h{display:flex;align-items:center;gap:14px}
+.dot{flex:none;width:16px;height:16px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite}
+.gs[data-s=closed] .dot{background:var(--bad);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(95,211,154,.6)}70%,100%{box-shadow:0 0 0 12px rgba(95,211,154,0)}}
+.gs small{display:block;font-size:12.5px;color:var(--muted)}
+.gs-h b{font-family:var(--font-head);font-weight:800;font-size:30px;line-height:1.2;color:var(--ok)}
+.gs[data-s=closed] .gs-h b{color:var(--bad)}
+.gs .seg{margin-top:14px}.gs .seg .yes.on{background:var(--ok)}
+.gs-msg{width:100%;margin-top:12px;padding:12px 14px;font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.gs-msg:focus{border-color:var(--red);outline:0}
+.gs-ask{margin-top:12px;padding:12px 14px;border:1px solid var(--warn);border-radius:10px;background:rgba(255,179,64,.1);font-weight:700}
+.gs-ask div{display:flex;gap:8px;margin-top:10px}
+.gs-ask button{flex:1;padding:11px;border-radius:8px;border:1px solid var(--line);font-weight:700}
+.gs-ask .go{background:var(--warn);color:#190c0c;border-color:transparent}
+.gs-sync{margin-top:10px;font-size:12.5px;color:var(--muted)}.gs-sync.ok{color:var(--ok)}.gs-sync.warn{color:var(--warn)}.gs-sync.bad{color:var(--bad)}
+/* attention */
+.attn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.at{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:start}
+.at b{display:block;font:700 28px/1.1 var(--font-display)}.at span{font-size:12.5px;color:var(--muted)}
+.at.has.bad{border-color:rgba(255,90,95,.55)}.at.has.bad b{color:var(--bad)}.at.has.warn{border-color:rgba(255,179,64,.55)}.at.has.warn b{color:var(--warn)}
+.attn-ok{grid-column:1/-1;padding:12px 14px;border:1px solid rgba(95,211,154,.4);border-radius:12px;color:var(--ok);font-weight:700}
+/* log */
+.loglist{display:flex;flex-direction:column;gap:8px;margin-block:12px;max-height:56vh;overflow:auto}
+.lg{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.lg.new{border-color:var(--red)}
+.lg i{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;background:var(--surface-2)}
+.lg-ok i{color:var(--ok)}.lg-bad i{color:var(--bad)}.lg-warn i{color:var(--warn)}.lg-hot i{color:var(--red)}
+.lg p{margin:0;font-weight:600;line-height:1.5}.lg time{display:block;font-size:12px;color:var(--muted);direction:ltr;text-align:start}
+/* check-in result */
+.res{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.82)}
+.res-b{width:100%;max-width:380px;padding:30px 20px;text-align:center;border:2px solid var(--ok);border-radius:20px;background:var(--surface);animation:up .25s ease-out}
+.res.bad .res-b{border-color:var(--bad)}.res.warn .res-b{border-color:var(--warn)}
+.res-b i{display:grid;place-items:center;width:84px;height:84px;margin:0 auto 12px;border-radius:50%;font-style:normal;font-size:46px;font-weight:800;background:var(--ok);color:#06210f}
+.res.bad i{background:var(--bad);color:#fff}.res.warn i{background:var(--warn);color:#190c0c}
+.res h3{margin:0;font:800 26px/1.3 var(--font-head);overflow-wrap:anywhere}.res p{margin:8px 0 20px;color:var(--muted);font-size:16px}
+.res button{width:100%;padding:14px;border-radius:10px;border:1px solid var(--line);font-weight:800}
+@media(max-width:520px){.attn{grid-template-columns:1fr 1fr}.at:last-child{grid-column:1/-1}}

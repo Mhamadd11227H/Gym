@@ -11,6 +11,8 @@
   var members = [], cfg = null, cache = {};
   var q = '', filter = 'all', editingId = null, payVal = 0, confirmId = null;
   var formCode = '', planDraft = [];
+  var LSS = 'forge_gym_status', LSL = 'forge_gym_log_v1', LSLR = 'forge_gym_log_read';
+  var gstat = jget(LSS, { open: true, msg: '', t: 0 }), stAsk = null, stSync = 'none', log = jget(LSL, []);
   var pubState = 'none', pubTimer = null, pubBusy = false, pubAgain = false, toastT = null, idleT = null, bkPass = null, pendingOverwrite = false;
 
   var $ = function (s) { return document.querySelector(s); };
@@ -132,7 +134,7 @@
     $('#app').hidden = false;
     $('#gToken').value = '';
     $('#gErr').textContent = '';
-    load(); render(); setPub('idle'); armIdle();
+    load(); render(); setPub('idle'); armIdle(); loadStatus();
   }
 
   function lock(msg) {
@@ -140,7 +142,7 @@
     sset('sessionStorage', SKT, null); sset('localStorage', LST, null);
     cfg = null; members = []; cache = {}; bkPass = null;
     editingId = null; confirmId = null; q = ''; filter = 'all'; pubBusy = false; pubAgain = false;
-    $('#veil').hidden = true; $('#veil3').hidden = true; document.body.style.overflow = '';
+    $('#veil').hidden = true; $('#veil3').hidden = true; $('#veil4').hidden = true; $('#res').hidden = true; document.body.style.overflow = '';
     $('#list').innerHTML = ''; $('#chips').innerHTML = ''; $('#q').value = ''; $('#bkbar').hidden = true;
     $('#sTotal').textContent = '0'; $('#sPaid').textContent = '0'; $('#sUnpaid').textContent = '0'; $('#sSum').innerHTML = '0<em>د.ع</em>';
     $('#app').hidden = true;
@@ -259,7 +261,7 @@
         catch (e2) { toast('پاراستنا ل GitHub نەچوو: ' + ghErr(e2), true); }
       }
     } catch (e) {
-      setPub('err');
+      setPub('err'); logEv('bad', 'بەلاڤکرنا گوهۆڕینان ل GitHub نەچوو: ' + ghErr(e));
       toast(ghErr(e), true);
     }
     pubBusy = false;
@@ -331,7 +333,8 @@
     $('#sSum').innerHTML = fmt(sum) + '<em>د.ع</em>';
 
     var expiredN = members.filter(function (m) { return info(m).expired; }).length;
-    var defs = [['all', 'هەمی', total], ['paid', 'پارە دایە', paid.length], ['unpaid', 'پارە نەدایە', total - paid.length], ['expired', 'ب دوماهی هاتی', expiredN]];
+    var soonN = members.filter(function (m) { var i = info(m); return !i.expired && i.days <= 5; }).length;
+    var defs = [['all', 'هەمی', total], ['paid', 'پارە دایە', paid.length], ['unpaid', 'پارە نەدایە', total - paid.length], ['soon', 'نێزیک ب دوماهی', soonN], ['expired', 'ب دوماهی هاتی', expiredN]];
     $('#chips').innerHTML = defs.map(function (d) {
       return '<button type="button" class="chip' + (filter === d[0] ? ' on' : '') + '" data-f="' + d[0] + '">' + d[1] + '<b>' + d[2] + '</b></button>';
     }).join('');
@@ -341,6 +344,7 @@
       if (filter === 'paid' && !m.paid) return false;
       if (filter === 'unpaid' && m.paid) return false;
       if (filter === 'expired' && !info(m).expired) return false;
+      if (filter === 'soon' && (info(m).expired || info(m).days > 5)) return false;
       if (!term) return true;
       return String(m.name || '').toLowerCase().indexOf(term) >= 0 ||
         String(m.phone || '').replace(/\s/g, '').indexOf(term.replace(/\s/g, '')) >= 0;
@@ -358,7 +362,7 @@
       list.innerHTML = rows.map(card).join('');
     }
     $('#qClear').hidden = !q;
-    backupBar();
+    backupBar(); renderStatus(); renderAttn(); renderLogBadge();
   }
 
   function card(m) {
@@ -379,7 +383,7 @@
       ? '<span class="confirm">پشت ڕاستی؟ <button type="button" class="yes" data-act="del-yes" data-id="' + esc(m.id) + '">بەلێ، ژێببە</button><button type="button" class="no" data-act="del-no">نەخێر</button></span>'
       : '<button type="button" class="del" data-act="del" data-id="' + esc(m.id) + '">ژێببە</button>';
 
-    return '<article class="m' + (m.paid ? ' paid' : '') + '">' +
+    return '<article class="m' + (m.paid ? ' paid' : '') + (inf.expired ? ' exp' : inf.days <= 5 ? ' soon' : '') + '">' +
       '<div class="m-head"><div class="m-name">' + esc(m.name) + '</div><div class="m-amt"><b>' + fmt(m.amount) + '</b><small>دینار</small></div></div>' +
       '<div class="m-meta">' + meta + '</div>' +
       (m.note ? '<div class="note">' + esc(m.note) + '</div>' : '') +
@@ -402,6 +406,7 @@
   function setPaid(id, val) {
     var m = find(id); if (!m || !!m.paid === val) return;
     save(Object.assign({}, m, { paid: val, paidAt: val ? todayISO() : null }));
+    logEv(val ? 'ok' : 'warn', m.name + (val ? ': پارەدان هاتە تۆمارکرن (' + fmt(m.amount) + ' دینار)' : ': وەک پارە نەدایی هاتە دانان'));
     toast(val ? 'پارەدان هاتە تۆمارکرن' : 'وەک پارە نەدایی هاتە دانان');
   }
   function checkIn(id) {
@@ -410,13 +415,15 @@
     var next = Object.assign({}, m, { lastVisit: todayISO() });
     var i = members.findIndex(function (x) { return x.id === id; });
     members[i] = next; persist(); render();
-    if (!m.paid) toast('ئاگەهداری: ' + m.name + ' پارە نەدایە', true);
-    else if (inf.expired) toast('ئاگەهداری: ماوەیا ' + m.name + ' ب دوماهی هاتیە', true);
-    else toast(m.name + ' چووە ژوور');
+    if (!m.paid) { showRes('bad', m.name, 'پارە نەدایە. نەهێلە بچیتە ژوور.'); logEv('bad', m.name + ' هاتە ژوور، بەلێ پارە نەدایە'); }
+    else if (inf.expired) { showRes('bad', m.name, 'ماوەیا ئەندامەتیێ ب دوماهی هاتیە.'); logEv('bad', m.name + ' هاتە ژوور، بەلێ ماوە ب دوماهی هاتیە'); }
+    else if (inf.days <= 5) { showRes('warn', m.name, 'بێت ژوور. ' + (inf.days ? 'تنێ ' + inf.days + ' ڕۆژ ماینە.' : 'ئەڤرو ب دوماهی دهێت.')); logEv('in', m.name + ' چووە ژوور'); }
+    else { showRes('ok', m.name, 'بخێر بێت. ' + inf.days + ' ڕۆژ ماینە.'); logEv('in', m.name + ' چووە ژوور'); }
   }
   function renew(id) {
     var m = find(id); if (!m) return;
     save(Object.assign({}, m, { start: todayISO(), paid: false, paidAt: null }));
+    logEv('hot', m.name + ': ئەندامەتی هاتە نویکرن');
     toast('هاتە نویکرن. ئێستا پارەدانێ تۆمار بکە.');
   }
   function copyCode(id) {
@@ -494,6 +501,7 @@
       paidAt: paid ? ((old && old.paid && old.paidAt) || todayISO()) : null,
       createdAt: old ? (old.createdAt || Date.now()) : Date.now()
     }));
+    logEv(old ? 'hot' : 'ok', old ? 'زانیاریێن ' + name + ' هاتنە گوهۆڕین' : 'ئەندامێ نوی هاتە زێدەکرن: ' + name);
     closeForm();
     toast(old ? 'گوهورین هاتنە پاشەکەفتکرن' : 'ئەندام هاتە تۆمارکرن');
   }
@@ -578,7 +586,7 @@
     return r.text();
   }
   async function cloudBackup(pass) {
-    var rec = await FG.encryptPass({ v: 1, at: Date.now(), members: members }, pass);
+    var rec = await FG.encryptPass({ v: 1, at: Date.now(), members: members, log: log }, pass);
     await putFile('forge-backup.json', JSON.stringify(Object.assign({ v: 1 }, rec)), 'Update encrypted backup');
   }
   async function cloudExists() {
@@ -624,6 +632,7 @@
       await cloudBackup(p);
       bkPass = p; jset(LSCB, todayISO());
       closeCloud(); render();
+      logEv('ok', 'کۆپیا کۆدکری ل GitHub هاتە پاراستن');
       toast('تۆمار ل GitHub هاتنە پاراستن ✓');
     } catch (x) { err.textContent = ghErr(x); }
     cloudBusy(false);
@@ -640,6 +649,8 @@
       try { obj = await FG.decryptPass(JSON.parse(raw), p); }
       catch (x) { err.textContent = 'پاسۆرد خەلەتە، یان فایل خەرابە.'; cloudBusy(false); return; }
       var n = mergeMembers(Array.isArray(obj.members) ? obj.members : []);
+      if (Array.isArray(obj.log)) { var seen = {}; log.forEach(function (e) { seen[e.t + e.x] = 1; }); obj.log.forEach(function (e) { if (e && !seen[e.t + e.x]) log.push(e); }); log.sort(function (a, b) { return b.t - a.t; }); log.length = Math.min(log.length, 300); jset(LSL, log); }
+      logEv('ok', n + ' ئەندام ژ کۆپیا GitHub هاتنە ڤەگەڕاندن');
       persist(); render(); schedulePublish();
       bkPass = p; jset(LSCB, todayISO());
       closeCloud();
@@ -648,7 +659,87 @@
     cloudBusy(false);
   }
 
+  /* ---------- gym open / closed (status.json is public on purpose: nothing private in it) ---------- */
+  function asciiJSON(o) { return JSON.stringify(o).replace(/[\u0080-\uffff]/g, function (c) { return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4); }); }
+  async function pushStatus() {
+    stSync = 'busy'; renderStatus();
+    try { await putFile('status.json', asciiJSON({ o: gstat.open ? 1 : 0, m: gstat.msg, t: gstat.t }), 'Update gym status'); stSync = 'ok'; }
+    catch (e) { stSync = 'err'; logEv('bad', 'دۆخێ قاعێ نەگەهشتە یاریزانان: ' + ghErr(e)); toast(ghErr(e), true); }
+    renderStatus();
+  }
+  async function loadStatus() {
+    try {
+      var raw = await ghRaw('contents/status.json?ref=' + encodeURIComponent(cfg.branch) + '&t=' + Date.now());
+      if (raw) { var j = JSON.parse(raw); gstat = { open: !!j.o, msg: j.m || '', t: j.t || 0 }; jset(LSS, gstat); stSync = 'ok'; } else stSync = 'none';
+    } catch (e) { stSync = 'err'; }
+    renderStatus();
+  }
+  function renderStatus() {
+    var el = $('#gs'); if (!el) return;
+    el.dataset.s = gstat.open ? 'open' : 'closed';
+    $('#gsTxt').textContent = gstat.open ? 'کراوەیە' : 'گرتیە';
+    if (document.activeElement !== $('#gsMsg')) $('#gsMsg').value = gstat.msg || '';
+    document.querySelectorAll('#gsSeg button').forEach(function (b) { b.classList.toggle('on', (b.dataset.st === 'open') === gstat.open); });
+    $('#gsAsk').hidden = stAsk === null;
+    if (stAsk !== null) $('#gsAskT').textContent = stAsk ? 'دڤێت یاریزان ببینن قاعە کراوەیە؟' : 'دڤێت یاریزان ببینن قاعە گرتیە؟';
+    var S = { busy: ['دهێتە نیشاندان بۆ یاریزانان…', 'warn'], ok: ['یاریزان ئێستا ڤی دۆخی دبینن ✓', 'ok'], err: ['نەگەهشتە یاریزانان. دووبارە هەوڵ بدە.', 'bad'], none: ['هێشتا بۆ یاریزانان نەهاتیە نیشاندان.', ''] }[stSync] || ['', ''];
+    $('#gsSync').textContent = S[0]; $('#gsSync').className = 'gs-sync ' + S[1];
+  }
+  function setStatus(open) {
+    stAsk = null;
+    gstat = { open: open, msg: $('#gsMsg').value.trim(), t: Date.now() }; jset(LSS, gstat);
+    logEv(open ? 'ok' : 'bad', open ? 'قاعە هاتە ڤەکرن: یاریزان دبینن کراوەیە' : 'قاعە هاتە گرتن: یاریزان دبینن گرتیە');
+    renderStatus(); pushStatus();
+  }
+  function renderAttn() {
+    var ex = 0, so = 0, un = 0;
+    members.forEach(function (m) { var i = info(m); if (i.expired) ex++; else if (i.days <= 5) so++; if (!m.paid) un++; });
+    var el = $('#attn');
+    if (!members.length) { el.innerHTML = ''; return; }
+    if (!ex && !so && !un) { el.innerHTML = '<div class="attn-ok">هەمی تشت ڕێکە ✓ چ ئەندامێن ب دوماهی هاتی یان بێ پارە نینن.</div>'; return; }
+    el.innerHTML = [['expired', 'ب دوماهی هاتینە', ex, 'bad'], ['soon', 'نێزیک ب دوماهی (5 ڕۆژ)', so, 'warn'], ['unpaid', 'پارە نەدایە', un, 'bad']].map(function (d) {
+      return '<button type="button" class="at ' + d[3] + (d[2] ? ' has' : '') + '" data-f="' + d[0] + '"><b>' + d[2] + '</b><span>' + d[1] + '</span></button>';
+    }).join('');
+  }
+
+  /* ---------- change log ---------- */
+  function logEv(k, x) {
+    log.unshift({ t: Date.now(), k: k, x: x }); if (log.length > 300) log.length = 300;
+    jset(LSL, log); renderLogBadge();
+  }
+  function renderLogBadge() {
+    var r = jget(LSLR, 0), n = log.filter(function (e) { return e.t > r; }).length, b = $('#logN');
+    if (!b) return; b.textContent = n > 99 ? '99+' : n; b.hidden = !n;
+  }
+  function openLog() {
+    var r = jget(LSLR, 0), ic = { ok: '✓', bad: '!', warn: '!', hot: '✎', 'in': '→' }, cl = { ok: 'ok', bad: 'bad', warn: 'warn', hot: 'hot', 'in': '' };
+    $('#logList').innerHTML = log.length ? log.map(function (e) {
+      var d = new Date(e.t), day = toISO(d) === todayISO() ? 'ئەڤرو' : toISO(d);
+      return '<div class="lg lg-' + (cl[e.k] || '') + (e.t > r ? ' new' : '') + '"><i>' + (ic[e.k] || '•') + '</i><div><p>' + esc(e.x) + '</p><time>' + day + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + '</time></div></div>';
+    }).join('') : '<div class="empty"><h3>هێشتا چ گوهۆڕین نەهاتینە کرن</h3></div>';
+    jset(LSLR, Date.now()); renderLogBadge();
+    $('#veil4').hidden = false; document.body.style.overflow = 'hidden';
+  }
+  function closeLog() { $('#veil4').hidden = true; document.body.style.overflow = ''; }
+  function showRes(kind, name, text) {
+    var r = $('#res'); r.className = 'res ' + kind;
+    $('#resI').textContent = kind === 'ok' ? '✓' : kind === 'warn' ? '!' : '✕';
+    $('#resN').textContent = name; $('#resT').textContent = text; r.hidden = false;
+  }
+
   /* ---------- events ---------- */
+  $('#btnLog').addEventListener('click', openLog);
+  $('#logClose').addEventListener('click', closeLog);
+  $('#veil4').addEventListener('click', function (e) { if (e.target === this) closeLog(); });
+  $('#resX').addEventListener('click', function () { $('#res').hidden = true; });
+  $('#attn').addEventListener('click', function (e) { var b = e.target.closest('.at'); if (!b) return; filter = b.dataset.f; render(); $('#list').scrollIntoView({ behavior: 'smooth' }); });
+  $('#gsSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var o = b.dataset.st === 'open'; if (o === gstat.open) return; stAsk = o; renderStatus(); });
+  $('#gsYes').addEventListener('click', function () { setStatus(stAsk); });
+  $('#gsNo').addEventListener('click', function () { stAsk = null; renderStatus(); });
+  $('#gsMsg').addEventListener('change', function () {
+    var v = this.value.trim(); if (v === (gstat.msg || '')) return;
+    gstat = { open: gstat.open, msg: v, t: Date.now() }; jset(LSS, gstat); logEv('hot', 'پەیاما قاعێ بۆ یاریزانان هاتە گوهۆڕین'); pushStatus();
+  });
   $('#gateForm').addEventListener('submit', submitGate);
   $('#btnLock').addEventListener('click', function () { lockSafe(); });
   $('#bkBtn').addEventListener('click', exportData);
@@ -679,7 +770,7 @@
     else if (a === 'edit') openForm(id);
     else if (a === 'del') { confirmId = id; render(); }
     else if (a === 'del-no') { confirmId = null; render(); }
-    else if (a === 'del-yes') { confirmId = null; removeMember(id); toast('هاتە ژێبرن'); }
+    else if (a === 'del-yes') { confirmId = null; logEv('bad', 'ئەندام هاتە ژێبرن: ' + ((find(id) || {}).name || '')); removeMember(id); toast('هاتە ژێبرن'); }
   });
   $('#fPay').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setPay(Number(b.dataset.v)); });
   $('#fNewCode').addEventListener('click', function () { formCode = freshCode(); $('#fCode').value = formCode; showCodeHint(); });
