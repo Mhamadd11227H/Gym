@@ -23,6 +23,16 @@
     try { return await FG.decrypt(rec, d.key); } catch (e) { throw new Error('nocode'); }
   }
 
+  function countUp(el, to) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || to < 2) { el.textContent = to; return; }
+    var t0 = performance.now(), dur = 900;
+    (function tick(t) {
+      var k = Math.min(1, (t - t0) / dur);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(tick);
+    })(t0);
+  }
+
   function showLogin() {
     $('#login').hidden = false;
     $('#me').hidden = true;
@@ -44,9 +54,11 @@
 
     var card = $('#pcard');
     card.className = 'pcard' + (expired ? ' bad' : soon ? ' soon' : '');
-    $('#pcDays').textContent = expired ? Math.abs(left) : left;
+    countUp($('#pcDays'), expired ? Math.abs(left) : left);
     $('#pcLabel').textContent = expired ? 'ڕۆژ بەری ئێستا ب دوماهی هاتیە' : (left === 0 ? 'ئەڤرو ب دوماهی دهێت' : 'ڕۆژ ماینە');
-    $('#pcBar').style.width = (expired ? 0 : Math.min(100, Math.round(left / total * 100))) + '%';
+    var pct = (expired ? 0 : Math.min(100, Math.round(left / total * 100))) + '%';
+    $('#pcBar').style.width = '0';
+    requestAnimationFrame(function () { requestAnimationFrame(function () { $('#pcBar').style.width = pct; }); });
     $('#pcStart').textContent = p.s;
     $('#pcEnd').textContent = p.e;
 
