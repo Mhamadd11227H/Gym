@@ -230,6 +230,20 @@
 <div class="res" id="res" hidden><div class="res-b"><i id="resI"></i><h3 id="resN"></h3><p id="resT"></p><button type="button" id="resX">باشە</button></div></div>
 <div class="toast" id="toast" hidden></div>
 
+<script>
+/* diagnostics: if crypto.js / app.js are missing on the server, or crash, say so on screen instead of doing nothing */
+(function () {
+  function say(t) { var e = document.getElementById('gErr'); if (e) e.textContent = t; }
+  window.addEventListener('error', function (ev) {
+    var t = ev.target;
+    if (t && t.tagName === 'SCRIPT') { say('فایلا ' + (t.getAttribute('src') || '').split('?')[0] + ' ل سەر GitHub نەهاتە دیتن. ناڤێ فایلی دڤێت وەک خۆ بیت (ب پیتێن بچووک).'); return; }
+    say('خەلەتیا کۆدی: ' + (ev.message || '') + ' (' + String(ev.filename || '').split('/').pop().split('?')[0] + ':' + (ev.lineno || '') + ')');
+  }, true);
+  document.getElementById('gateForm').addEventListener('submit', function (e) {
+    if (!window.__fgReady) { e.preventDefault(); say(window.FG ? 'app.js نەهاتە کارکرن. فایلێ app.js ل GitHub بپشکنە.' : 'crypto.js و app.js نەهاتینە بارکرن. هەردوو فایلان ل GitHub بپشکنە.'); }
+  });
+})();
+</script>
 <script src="crypto.js?v=3"></script>
 <script src="app.js?v=3"></script>
 </body>
