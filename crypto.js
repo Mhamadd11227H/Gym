@@ -4,7 +4,8 @@
 (function (g) {
   var ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; /* 32 symbols, no 0/O/1/I */
   var SALT = 'forge-gym-v1';
-  var ITER = 100000;
+  var ITER_OLD = 100000;    /* records published before v2 */
+  var ITER_NEW = 300000;    /* current: 3x harder to guess offline; portal.json says which one it used (field i) */
 
   function toB64(bytes) {
     var s = '';
@@ -30,11 +31,11 @@
   }
   function normCode(c) { return String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
 
-  async function derive(code) {
+  async function derive(code, iter) {
     var enc = new TextEncoder();
     var km = await g.crypto.subtle.importKey('raw', enc.encode(normCode(code)), 'PBKDF2', false, ['deriveBits']);
     var bits = new Uint8Array(await g.crypto.subtle.deriveBits(
-      { name: 'PBKDF2', salt: enc.encode(SALT), iterations: ITER, hash: 'SHA-256' }, km, 512));
+      { name: 'PBKDF2', salt: enc.encode(SALT), iterations: iter || ITER_OLD, hash: 'SHA-256' }, km, 512));
     var key = await g.crypto.subtle.importKey('raw', bits.slice(32, 64), 'AES-GCM', false, ['encrypt', 'decrypt']);
     return { id: hex(bits.slice(0, 16)), key: key };
   }
@@ -68,5 +69,5 @@
     return JSON.parse(new TextDecoder().decode(pt));
   }
 
-  g.FG = { encryptPass: encryptPass, decryptPass: decryptPass, genCode: genCode, normCode: normCode, derive: derive, encrypt: encrypt, decrypt: decrypt };
+  g.FG = { ITER: ITER_NEW, encryptPass: encryptPass, decryptPass: decryptPass, genCode: genCode, normCode: normCode, derive: derive, encrypt: encrypt, decrypt: decrypt };
 })(typeof window !== 'undefined' ? window : globalThis);
