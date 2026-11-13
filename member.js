@@ -14,10 +14,10 @@
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 
   async function fetchRecord(code) {
-    var d = await FG.derive(code);
     var res = await fetch('portal.json?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('net');
     var data = await res.json();
+    var d = await FG.derive(code, data && data.i);
     var rec = data && data.r && data.r[d.id];
     if (!rec) throw new Error('nocode');
     try { return await FG.decrypt(rec, d.key); } catch (e) { throw new Error('nocode'); }
