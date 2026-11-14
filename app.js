@@ -135,7 +135,7 @@
     $('#app').hidden = false;
     $('#gToken').value = '';
     $('#gErr').textContent = '';
-    load(); render(); setPub('idle'); armIdle(); loadStatus(); setTab(location.hash.slice(1));
+    load(); render(); purgeCheck(); setPub('idle'); armIdle(); loadStatus(); setTab(location.hash.slice(1));
     if (members.length && jget(LSIT, 0) !== FG.ITER) schedulePublish();   /* one-time: publish with the stronger encryption */
   }
 
@@ -211,7 +211,7 @@
     return {
       n: m.name, s: m.start || todayISO(), e: info(m).iso, p: m.paid ? 1 : 0,
       w: normPlan(m.plan).filter(dayHas).map(function (d) {
-        return { k: d.k, t: d.t, f: d.f || '', x: d.x || '', e: d.e.filter(function (z) { return z.n || z.g; }).map(function (z) { return { n: z.n, s: z.s, g: okImg(z.g) ? z.g : '' }; }) };
+        return { k: d.k, t: d.t, f: d.f || '', x: d.x || '', e: d.e.filter(function (z) { return z.n || z.g; }).map(function (z) { return { n: z.n, s: z.s, g: '' }; }) };
       })
     };
   }
@@ -322,6 +322,52 @@
     var t = 'سلاڤ ' + m.name + '،\nئەندامەتیا تە ل Forge Gym ' + (inf.expired ? 'ب دوماهی هاتیە.' : (inf.days === 0 ? 'ئەڤرو ب دوماهی دهێت.' : 'تنێ ' + inf.days + ' ڕۆژ ماینە.')) + '\nبۆ نویکرنێ ڕا بگەهینە مە. سوپاس 🙏';
     return 'https://wa.me/' + p + '?text=' + encodeURIComponent(t);
   }
+  /* ئەندامێن ب دوماهی هاتی: پشتی 60 ڕۆژان داتایا وان دهێتە ژێبرن، پشتی هندێ کو خودان وێ ل سەر مۆبایلێ هەلگریت */
+  var PURGE = 60, PWARN = 46;
+  function sinceEnd(m) { var i = info(m); return i.expired ? -i.days : -1; }
+  function dueList() { return members.filter(function (m) { return sinceEnd(m) >= PURGE; }); }
+  function warnList() { return members.filter(function (m) { var g = sinceEnd(m); return g >= PWARN && g < PURGE; }); }
+  function renderPurge() {
+    var el = $('#purge'); if (!el) return;
+    var due = dueList(), soon = warnList();
+    if (!due.length && !soon.length) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = (due.length ? '<div class="pu bad"><b>' + due.length + ' ئەندام ڕۆژا ژێبرنا وان هاتیە</b><p>پتر ژ 2 هەیڤان ب دوماهی هاتینە. داتایا وان دێ ل سەر مۆبایلا تە هێتە هەلگرتن و پاشی ژێببیت.</p><button type="button" data-pu="go">هەلگرتن و ژێبرن</button></div>' : '') +
+      (soon.length ? '<div class="pu warn"><b>' + soon.length + ' ئەندام دێ د 14 ڕۆژێن دەمدا بهێنە ژێبرن</b><p>ئەگەر دڤێت داتایا وان بپارێزی، ئێستا هەلگرە.</p><button type="button" data-pu="save">هەلگرتنا داتایێ</button></div>' : '');
+  }
+  async function saveBlob(json, name) {
+    try {
+      var file = new File([json], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Forge Gym' }); return true; }
+    } catch (e) { if (e && e.name === 'AbortError') return false; }
+    var url = URL.createObjectURL(new Blob([json], { type: 'application/json' })), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    return true;
+  }
+  async function saveLeavers(list) {
+    moneyInit();
+    var ids = {}; list.forEach(function (m) { ids[m.id] = 1; });
+    var ok = await saveBlob(JSON.stringify({ v: 1, at: Date.now(), members: list, pays: pays.filter(function (p) { return ids[p.i]; }) }, null, 2), 'forge-gym-leavers-' + todayISO() + '.json');
+    if (ok) { list.forEach(function (m) { m.savedAt = Date.now(); }); persist(); }
+    return ok;
+  }
+  /* personal data goes; the money lines stay (without a name) so the income reports remain true */
+  function purgeMembers(list) {
+    moneyInit();
+    var ids = {}, names = [];
+    list.forEach(function (m) { ids[m.id] = 1; names.push(m.name); });
+    pays.forEach(function (p) { if (p.i && ids[p.i]) { p.n = 'ئەندامێ ژێبرایی'; delete p.i; } });
+    jset(LSP, pays);
+    log.forEach(function (e) { names.forEach(function (n) { if (n && String(e.x).indexOf(n) >= 0) e.x = String(e.x).split(n).join('ئەندامێ ژێبرایی'); }); });
+    members = members.filter(function (m) { return !ids[m.id]; });
+    persist(); logEv('bad', list.length + ' ئەندام ب دوماهی هاتینە و داتایا وان هاتە ژێبرن');
+    render(); schedulePublish();
+  }
+  function purgeCheck() {
+    var due = dueList();
+    if (due.length && due.every(function (m) { return m.savedAt; })) { purgeMembers(due); toast(due.length + ' ئەندام (پتر ژ 2 هەیڤان ب دوماهی هاتی) هاتنە ژێبرن'); }
+  }
   function backupBar() {
     var bar = $('#bkbar');
     if (!members.length) { bar.hidden = true; return; }
@@ -373,7 +419,7 @@
       list.innerHTML = rows.map(row).join('');
     }
     $('#qClear').hidden = !q;
-    backupBar(); renderDetail(); renderStatus(); renderAttn(); renderLogBadge(); renderToday(); renderMoney();
+    backupBar(); renderPurge(); renderDetail(); renderStatus(); renderAttn(); renderLogBadge(); renderToday(); renderMoney();
   }
 
   /* دۆخ: سەوز = پارە دایە، سور = پارە نەدایە، زەرد = کات ب دوماهی هاتی و پارە نەدایە */
@@ -622,7 +668,7 @@
   function dayHas(d) { return !!(d && (d.f || d.x || (d.e || []).some(function (z) { return z && (z.n || z.g); }))); }
   function cleanDay(d) {
     return { k: d.k, t: d.t || WEEK[d.k] || '', f: d.f || '', x: d.x || '',
-      e: (d.e || []).filter(Boolean).map(function (z) { return { n: z.n || '', s: z.s || '', g: z.g || '' }; }) };
+      e: (d.e || []).filter(Boolean).map(function (z) { return { n: z.n || '', s: z.s || '', g: '' }; }) };
   }
   /* always returns the six weekdays (plus any extra days an older plan had) */
   function normPlan(plan) {
@@ -671,10 +717,7 @@
     $('#veil5').hidden = true; document.body.style.overflow = ''; prog = null;
   }
   function exRow(z, i) {
-    var src = z.g ? (imgPrev[z.g] || z.g) : '';
-    return '<div class="ex"><button type="button" class="exph' + (src ? ' has' : '') + '" data-pick="' + i + '" aria-label="وێنەی ڕاهێنانێ">' +
-      (src ? '<img src="' + esc(src) + '" alt="">' : '') +
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 7.5 6H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.5L15 4zm3 4.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/></svg></button>' +
+    return '<div class="ex">' +
       '<div class="exf"><input data-i="' + i + '" data-k="n" list="exNames" dir="auto" autocomplete="off" value="' + esc(z.n) + '" placeholder="ناڤێ ڕاهێنانێ (Bench Press)" aria-label="ناڤێ ڕاهێنانێ">' +
       '<input data-i="' + i + '" data-k="s" class="ltr" dir="ltr" autocomplete="off" value="' + esc(z.s) + '" placeholder="4×10" aria-label="سێت و دووبارەکرن"></div>' +
       '<button type="button" class="exrm" data-rm="' + i + '" aria-label="ژێبرنا ڕاهێنانێ">✕</button></div>';
@@ -746,7 +789,7 @@
       return { k: d.k, t: d.t, f: d.f.trim(), x: d.x.trim(),
         e: d.e.map(function (z) {
           var n = z.n.trim(), hit = n && !z.g ? exLib[libKey(n)] : null;
-          return { n: n, s: z.s.trim(), g: z.g || (hit ? hit.g : '') };
+          return { n: n, s: z.s.trim(), g: '' };
         }).filter(function (z) { return z.n || z.g; }) };
     });
     m.plan.forEach(function (d) { d.e.forEach(function (z) { if (z.n) libAdd(z.n, z.g, true); }); });
@@ -1324,6 +1367,15 @@
 
   $('#tabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setTab(b.dataset.t); });
   $('#mSum').addEventListener('click', function (e) { var b = e.target.closest('[data-dl]'); if (b) exportMonth(b.dataset.dl); });
+  $('#purge').addEventListener('click', async function (e) {
+    var b = e.target.closest('[data-pu]'); if (!b) return;
+    b.disabled = true;
+    var go = b.dataset.pu === 'go', list = go ? dueList() : warnList();
+    var ok = await saveLeavers(list);
+    if (ok && go) { purgeMembers(list); toast('داتا هاتە هەلگرتن و ئەندام هاتنە ژێبرن'); }
+    else if (ok) toast('داتا هاتە هەلگرتن');
+    b.disabled = false;
+  });
   $('#mPrev').addEventListener('click', function () { gotoMonth(-1); });
   $('#mNext').addEventListener('click', function () { gotoMonth(1); });
   $('#dstrip').addEventListener('click', function (e) {

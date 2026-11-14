@@ -240,3 +240,14 @@ button.re:active{opacity:.7}
 .acts .rem{color:#25d366;font-weight:700;padding:4px 12px;border:1px solid rgba(37,211,102,.5);border-radius:6px;background:rgba(37,211,102,.08)}
 .msum .dl{width:100%;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-weight:700}
 .msum .dl:active{border-color:var(--red)}
+
+/* ===== v8 ===== */
+.exph{display:none!important}
+.purge{display:grid;gap:10px;margin:0 0 14px}
+.pu{padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.pu.bad{border-color:rgba(255,90,95,.6)}.pu.warn{border-color:rgba(255,179,64,.6)}
+.pu b{display:block}.pu.bad b{color:var(--bad)}.pu.warn b{color:var(--warn)}
+.pu p{margin:4px 0 12px;font-size:13.5px;color:var(--muted);line-height:1.7}
+.pu button{width:100%;padding:12px;border-radius:10px;font-weight:800;background:var(--surface-2);border:1px solid var(--line)}
+.pu.bad button{background:var(--bad);border-color:transparent;color:#fff}
+.pu button:disabled{opacity:.6}
