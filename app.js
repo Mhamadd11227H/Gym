@@ -10,7 +10,7 @@
   var PLAN = { 1: '1 هەیڤ', 3: '3 هەیڤ', 6: '6 هەیڤ', 12: 'ساڵەک' };
   var members = [], cfg = null, cache = {};
   var q = '', filter = 'all', editingId = null, payVal = 0, confirmId = null;
-  var formCode = '', planDraft = [];
+  var formCode = '';
   var LSS = 'forge_gym_status', LSL = 'forge_gym_log_v1', LSLR = 'forge_gym_log_read';
   var gstat = jget(LSS, { open: true, msg: '', t: 0 }), stAsk = null, stSync = 'none', log = jget(LSL, []);
   var pubState = 'none', pubTimer = null, pubBusy = false, pubAgain = false, toastT = null, idleT = null, bkPass = null, pendingOverwrite = false;
@@ -144,7 +144,7 @@
     sset('sessionStorage', SKT, null); sset('localStorage', LST, null);
     cfg = null; members = []; cache = {}; bkPass = null;
     editingId = null; confirmId = null; q = ''; filter = 'all'; pubBusy = false; pubAgain = false;
-    $('#veil').hidden = true; $('#veil3').hidden = true; $('#veil4').hidden = true; $('#res').hidden = true; document.body.style.overflow = '';
+    $('#veil').hidden = true; $('#veil3').hidden = true; $('#veil4').hidden = true; $('#veil5').hidden = true; prog = null; $('#res').hidden = true; document.body.style.overflow = '';
     $('#list').innerHTML = ''; $('#chips').innerHTML = ''; $('#q').value = ''; $('#bkbar').hidden = true;
     $('#sTotal').textContent = '0'; $('#sPaid').textContent = '0'; $('#sUnpaid').textContent = '0'; $('#sSum').innerHTML = '0<em>د.ع</em>';
     $('#app').hidden = true;
@@ -210,7 +210,9 @@
   function portalData(m) {
     return {
       n: m.name, s: m.start || todayISO(), e: info(m).iso, p: m.paid ? 1 : 0,
-      w: (m.plan || []).filter(function (d) { return d && (d.t || d.x); }).map(function (d) { return { t: d.t || '', x: d.x || '' }; })
+      w: normPlan(m.plan).filter(dayHas).map(function (d) {
+        return { k: d.k, t: d.t, f: d.f || '', x: d.x || '', e: d.e.filter(function (z) { return z.n || z.g; }).map(function (z) { return { n: z.n, s: z.s, g: okImg(z.g) ? z.g : '' }; }) };
+      })
     };
   }
 
@@ -375,8 +377,8 @@
     else if (inf.days <= 5) tags += '<span class="tag warn">' + (inf.days === 0 ? 'ئەڤرو ب دوماهی دهێت' : 'ماینە ' + inf.days + ' ڕۆژ') + '</span>';
     else tags += '<span class="tag">ماینە ' + inf.days + ' ڕۆژ</span>';
     if (m.lastVisit) tags += '<span class="tag">' + (m.lastVisit === todayISO() ? 'ئەڤرو هاتیە' : 'دوماهیک هاتن ' + esc(m.lastVisit)) + '</span>';
-    var days = (m.plan || []).filter(function (d) { return d && (d.t || d.x); }).length;
-    tags += '<span class="tag">' + (days ? 'خشتە: ' + days + ' ڕۆژ' : 'بێ خشتە') + '</span>';
+    var days = normPlan(m.plan).filter(dayHas).length;
+    tags += '<span class="tag">' + (days ? 'بەرنامە: ' + days + ' ڕۆژ' : 'بێ بەرنامە') + '</span>';
 
     var meta = '<span class="tag ' + (m.paid ? 'ok' : 'red') + '">' + (m.paid ? 'پارە دایە' : 'پارە نەدایە') + '</span>' +
       '<span>' + esc(PLAN[m.months] || '1 هەیڤ') + '</span>' +
@@ -400,6 +402,7 @@
       '<div class="acts">' +
         '<button type="button" class="in" data-act="in" data-id="' + esc(m.id) + '">چووە ژوور</button>' +
         (inf.expired ? '<button type="button" data-act="renew" data-id="' + esc(m.id) + '">نویکرن</button>' : '') +
+        '<button type="button" class="pg" data-act="prog" data-id="' + esc(m.id) + '">بەرنامەیا ڕاهێنانێ</button>' +
         '<button type="button" data-act="edit" data-id="' + esc(m.id) + '">دەستکاری</button>' +
         del +
       '</div></article>';
@@ -448,19 +451,6 @@
     payVal = v;
     document.querySelectorAll('#fPay button').forEach(function (b) { b.classList.toggle('on', Number(b.dataset.v) === v); });
   }
-  function renderPlan() {
-    $('#fPlan').innerHTML = planDraft.map(function (d, i) {
-      return '<div class="day"><div class="day-h"><input data-i="' + i + '" data-k="t" value="' + esc(d.t) + '" placeholder="ڕۆژا ' + (i + 1) + ' (بۆ نموونە: سنگ و ترایسێپس)" aria-label="ناڤێ ڕۆژێ">' +
-        '<button type="button" data-rm="' + i + '" aria-label="ژێبرنا ڕۆژێ">✕</button></div>' +
-        '<textarea data-i="' + i + '" data-k="x" placeholder="هەر ڕاهێنانەکێ د هێلەکێ دا بنڤیسە&#10;Bench Press 4×10&#10;Incline Press 3×12" aria-label="ڕاهێنان">' + esc(d.x) + '</textarea></div>';
-    }).join('');
-  }
-  function renderCopy(exceptId) {
-    var opts = members.filter(function (m) { return m.id !== exceptId && (m.plan || []).length; });
-    $('#fCopy').innerHTML = '<option value="">کۆپی ژ ئەندامەکێ دی…</option>' +
-      opts.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.name) + '</option>'; }).join('');
-    $('#fCopy').hidden = !opts.length;
-  }
   function openForm(id, presetName) {
     editingId = id || null;
     var m = id ? find(id) : null;
@@ -474,8 +464,6 @@
     formCode = m ? m.code : freshCode();
     $('#fCode').value = formCode;
     showCodeHint();
-    planDraft = m ? JSON.parse(JSON.stringify(m.plan || [])) : [];
-    renderPlan(); renderCopy(id);
     setPay(m && m.paid ? 1 : 0);
     $('#fErr').textContent = '';
     $('#veil').hidden = false;
@@ -496,8 +484,6 @@
     var prob = codeProblem(codeRaw, editingId, $('#fPhone').value, old);
     if (prob) { $('#fErr').textContent = prob; $('#fCode').focus(); return; }
     var paid = payVal === 1;
-    var plan = planDraft.map(function (d) { return { t: (d.t || '').trim(), x: (d.x || '').trim() }; })
-      .filter(function (d) { return d.t || d.x; });
     save(Object.assign({}, old || {}, {
       id: old ? old.id : newId(),
       name: name, amount: amount,
@@ -506,7 +492,7 @@
       start: $('#fStart').value || todayISO(),
       note: $('#fNote').value.trim(),
       code: codeRaw,
-      plan: plan,
+      plan: old ? (old.plan || []) : blankWeek(),   /* a new member starts with the six weekdays ready */
       paid: paid,
       paidAt: paid ? ((old && old.paid && old.paidAt) || todayISO()) : null,
       createdAt: old ? (old.createdAt || Date.now()) : Date.now()
@@ -518,6 +504,153 @@
     logEv(old ? 'hot' : 'ok', old ? 'زانیاریێن ' + name + ' هاتنە گوهۆڕین' : 'ئەندامێ نوی هاتە زێدەکرن: ' + name);
     closeForm();
     toast(old ? 'گوهورین هاتنە پاشەکەفتکرن' : 'ئەندام هاتە تۆمارکرن');
+    if (!old) openProg(sid);   /* straight on to writing his exercises */
+  }
+
+  /* ---------- training program: the six weekdays are ready, the owner writes the exercises ---------- */
+  var WEEK = ['شەممە', 'ئێک شەمب', 'دوو شەمب', 'سێ شەمب', 'چار شەمب', 'پێنج شەمب'];
+  var LSE = 'forge_gym_exlib_v1';
+  var prog = null, exLib = {}, imgPrev = {}, pickIdx = -1;
+
+  function okImg(g) { return /^img\/[A-Za-z0-9._-]+\.jpg$/.test(g || ''); }
+  function blankDay(k) { return { k: k, t: WEEK[k], f: '', e: [], x: '' }; }
+  function blankWeek() { return WEEK.map(function (_, k) { return blankDay(k); }); }
+  function dayHas(d) { return !!(d && (d.f || d.x || (d.e || []).some(function (z) { return z && (z.n || z.g); }))); }
+  function cleanDay(d) {
+    return { k: d.k, t: d.t || WEEK[d.k] || '', f: d.f || '', x: d.x || '',
+      e: (d.e || []).filter(Boolean).map(function (z) { return { n: z.n || '', s: z.s || '', g: z.g || '' }; }) };
+  }
+  /* always returns the six weekdays (plus any extra days an older plan had) */
+  function normPlan(plan) {
+    var src = Array.isArray(plan) ? plan.filter(Boolean) : [], out = [], k;
+    if (src.some(function (d) { return typeof d.k === 'number'; })) {
+      for (k = 0; k < 6; k++) { var f = src.find(function (d) { return d.k === k; }); out.push(f ? cleanDay(f) : blankDay(k)); }
+      src.filter(function (d) { return typeof d.k === 'number' && d.k >= 6; }).forEach(function (d) { out.push(cleanDay(d)); });
+      return out;
+    }
+    /* older free-text plan: day i becomes weekday i, its old title becomes the focus line, its text stays as notes */
+    src.forEach(function (d, i) {
+      var b = i < 6 ? blankDay(i) : { k: i, t: d.t || ('ڕۆژا ' + (i + 1)), f: '', e: [], x: '' };
+      if (i < 6) b.f = d.t || '';
+      b.x = d.x || '';
+      out.push(b);
+    });
+    for (k = out.length; k < 6; k++) out.push(blankDay(k));
+    return out;
+  }
+
+  /* exercise library: a name typed once remembers its picture for every other member */
+  function libKey(n) { return String(n).trim().toLowerCase().replace(/\s+/g, ' '); }
+  function libAdd(n, g, keep) { var k = libKey(n); if (!k || !okImg(g)) return; if (!keep || !exLib[k]) exLib[k] = { n: String(n).trim(), g: g }; }
+  function libLoad() {
+    exLib = jget(LSE, {});
+    members.forEach(function (m) { normPlan(m.plan).forEach(function (d) { d.e.forEach(function (z) { if (z.n) libAdd(z.n, z.g, true); }); }); });
+    jset(LSE, exLib);
+  }
+
+  function openProg(id) {
+    var m = find(id); if (!m) return;
+    libLoad();
+    var plan = normPlan(m.plan), first = plan.findIndex(dayHas), t = (new Date().getDay() + 1) % 7;   /* Saturday = 0 … Thursday = 5, Friday = 6 */
+    prog = { id: id, draft: JSON.parse(JSON.stringify(plan)), day: first < 0 ? 0 : (t < 6 ? t : first), dirty: false };
+    $('#pTitle').textContent = 'بەرنامەیا ڕاهێنانێ: ' + m.name;
+    $('#pErr').textContent = '';
+    var opts = members.filter(function (x) { return x.id !== id && normPlan(x.plan).some(dayHas); });
+    $('#pCopy').innerHTML = '<option value="">کۆپیکرنا بەرنامەیێ ژ ئەندامەکێ دی…</option>' +
+      opts.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>'; }).join('');
+    $('#pCopyBox').hidden = !opts.length;
+    renderProg();
+    $('#veil5').hidden = false; document.body.style.overflow = 'hidden';
+  }
+  function closeProg(force) {
+    if (!force && prog && prog.dirty && !confirm('گوهۆڕینێن تە نەهاتینە پاشەکەفتکرن. دێ داخی؟')) return;
+    $('#veil5').hidden = true; document.body.style.overflow = ''; prog = null;
+  }
+  function exRow(z, i) {
+    var src = z.g ? (imgPrev[z.g] || z.g) : '';
+    return '<div class="ex"><button type="button" class="exph' + (src ? ' has' : '') + '" data-pick="' + i + '" aria-label="وێنەی ڕاهێنانێ">' +
+      (src ? '<img src="' + esc(src) + '" alt="">' : '') +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 7.5 6H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2.5L15 4zm3 4.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/></svg></button>' +
+      '<div class="exf"><input data-i="' + i + '" data-k="n" list="exNames" dir="auto" autocomplete="off" value="' + esc(z.n) + '" placeholder="ناڤێ ڕاهێنانێ (Bench Press)" aria-label="ناڤێ ڕاهێنانێ">' +
+      '<input data-i="' + i + '" data-k="s" class="ltr" dir="ltr" autocomplete="off" value="' + esc(z.s) + '" placeholder="4×10" aria-label="سێت و دووبارەکرن"></div>' +
+      '<button type="button" class="exrm" data-rm="' + i + '" aria-label="ژێبرنا ڕاهێنانێ">✕</button></div>';
+  }
+  function renderProg() {
+    if (!prog) return;
+    var d = prog.draft[prog.day];
+    $('#pTabs').innerHTML = prog.draft.map(function (x, i) {
+      return '<button type="button" role="tab" class="wtab' + (i === prog.day ? ' on' : '') + (dayHas(x) ? ' has' : '') + '" data-d="' + i + '" aria-selected="' + (i === prog.day) + '">' + esc(x.t) + '</button>';
+    }).join('');
+    $('#pFocus').value = d.f; $('#pNote').value = d.x;
+    $('#pEx').innerHTML = d.e.map(exRow).join('') || '<p class="exempty">هێشتا چ ڕاهێنان نەهاتینە زێدەکرن. دوگمەیا ل خوارێ بکە.</p>';
+    $('#exNames').innerHTML = Object.keys(exLib).map(function (k) { return '<option value="' + esc(exLib[k].n) + '">'; }).join('');
+  }
+  function markTabs() {
+    if (!prog) return;
+    $('#pTabs').querySelectorAll('[data-d]').forEach(function (b) { b.classList.toggle('has', dayHas(prog.draft[Number(b.dataset.d)])); });
+  }
+  function setThumb(i) {
+    var b = $('#pEx').querySelector('[data-pick="' + i + '"]'), z = prog && prog.draft[prog.day].e[i];
+    if (!b || !z) return;
+    var src = z.g ? (imgPrev[z.g] || z.g) : '', old = b.querySelector('img');
+    if (old) old.remove();
+    if (src) { var im = document.createElement('img'); im.alt = ''; im.src = src; b.insertBefore(im, b.firstChild); }
+    b.classList.toggle('has', !!src);
+  }
+
+  /* a phone photo is 3-6 MB: shrink it to about 60 KB before it goes to GitHub */
+  async function shrink(file) {
+    var bmp;
+    try { bmp = await createImageBitmap(file); }
+    catch (e) {
+      bmp = await new Promise(function (ok, no) {
+        var im = new Image(), u = URL.createObjectURL(file);
+        im.onload = function () { URL.revokeObjectURL(u); ok(im); };
+        im.onerror = function () { no(new Error('img')); };
+        im.src = u;
+      });
+    }
+    var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
+    if (!w || !h) throw new Error('img');
+    var sc = Math.min(1, 720 / Math.max(w, h));
+    var c = document.createElement('canvas'); c.width = Math.round(w * sc); c.height = Math.round(h * sc);
+    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return c.toDataURL('image/jpeg', 0.72);
+  }
+  async function pickImage(file) {
+    var i = pickIdx; pickIdx = -1;
+    if (!file || !prog || i < 0) return;
+    var z = prog.draft[prog.day].e[i]; if (!z) return;
+    var btn = $('#pEx').querySelector('[data-pick="' + i + '"]');
+    if (btn) btn.classList.add('busy');
+    try {
+      var url = await shrink(file);
+      var path = 'img/ex-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + '.jpg';
+      await gh('contents/' + path, { method: 'PUT', body: JSON.stringify({ message: 'Add exercise image', content: url.split(',')[1], branch: cfg.branch }) });
+      imgPrev[path] = url; z.g = path;
+      if (prog) prog.dirty = true;
+      if (z.n) { libAdd(z.n, path); jset(LSE, exLib); }
+    } catch (e) { toast(e && e.message === 'img' ? 'نەشێین وێنەی بخوینین.' : ghErr(e), true); }
+    if (prog) renderProg();
+  }
+
+  function saveProg() {
+    if (!prog) return;
+    var m = find(prog.id); if (!m) { closeProg(true); return; }
+    m.plan = prog.draft.map(function (d) {
+      return { k: d.k, t: d.t, f: d.f.trim(), x: d.x.trim(),
+        e: d.e.map(function (z) {
+          var n = z.n.trim(), hit = n && !z.g ? exLib[libKey(n)] : null;
+          return { n: n, s: z.s.trim(), g: z.g || (hit ? hit.g : '') };
+        }).filter(function (z) { return z.n || z.g; }) };
+    });
+    m.plan.forEach(function (d) { d.e.forEach(function (z) { if (z.n) libAdd(z.n, z.g, true); }); });
+    jset(LSE, exLib);
+    save(m);
+    logEv('hot', 'بەرنامەیا ڕاهێنانێ یا ' + m.name + ' هاتە گوهۆڕین');
+    closeProg(true);
+    toast('بەرنامە هاتە پاشەکەفتکرن');
   }
 
   /* ---------- backup ---------- */
@@ -791,6 +924,7 @@
     else if (a === 'renew') renew(id);
     else if (a === 'copy') copyCode(id);
     else if (a === 'edit') openForm(id);
+    else if (a === 'prog') openProg(id);
     else if (a === 'del') { confirmId = id; render(); }
     else if (a === 'del-no') { confirmId = null; render(); }
     else if (a === 'del-yes') { confirmId = null; logEv('bad', 'ئەندام هاتە ژێبرن: ' + ((find(id) || {}).name || '')); removeMember(id); toast('هاتە ژێبرن'); }
@@ -803,20 +937,47 @@
     showCodeHint();
   });
   $('#fPhone').addEventListener('input', showCodeHint);
-  $('#fAddDay').addEventListener('click', function () { planDraft.push({ t: '', x: '' }); renderPlan(); var t = $('#fPlan').querySelectorAll('input'); if (t.length) t[t.length - 1].focus(); });
-  $('#fPlan').addEventListener('input', function (e) {
-    var el = e.target, i = el.dataset.i;
-    if (i != null && planDraft[i]) planDraft[i][el.dataset.k] = el.value;
+  /* program editor */
+  $('#pTabs').addEventListener('click', function (e) { var b = e.target.closest('[data-d]'); if (!b || !prog) return; prog.day = Number(b.dataset.d); renderProg(); });
+  $('#pFocus').addEventListener('input', function (e) { if (!prog) return; prog.draft[prog.day].f = e.target.value; prog.dirty = true; markTabs(); });
+  $('#pNote').addEventListener('input', function (e) { if (!prog) return; prog.draft[prog.day].x = e.target.value; prog.dirty = true; markTabs(); });
+  $('#pEx').addEventListener('input', function (e) {
+    var el = e.target, i = el.dataset.i; if (!prog || i == null) return;
+    var z = prog.draft[prog.day].e[i]; if (!z) return;
+    z[el.dataset.k] = el.value; prog.dirty = true; markTabs();
   });
-  $('#fPlan').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-rm]'); if (!b) return;
-    planDraft.splice(Number(b.dataset.rm), 1); renderPlan();
+  $('#pEx').addEventListener('change', function (e) {
+    var el = e.target; if (!prog || el.dataset.k !== 'n') return;
+    var i = Number(el.dataset.i), z = prog.draft[prog.day].e[i]; if (!z) return;
+    var hit = exLib[libKey(z.n)];
+    if (hit && !z.g) { z.g = hit.g; setThumb(i); }
+    else if (z.g && z.n) { libAdd(z.n, z.g, true); jset(LSE, exLib); }
   });
-  $('#fCopy').addEventListener('change', function (e) {
-    var m = find(e.target.value);
-    if (m) { planDraft = JSON.parse(JSON.stringify(m.plan || [])); renderPlan(); }
-    e.target.value = '';
+  $('#pEx').addEventListener('click', function (e) {
+    if (!prog) return;
+    var p = e.target.closest('[data-pick]'), r = e.target.closest('[data-rm]');
+    if (p) { pickIdx = Number(p.dataset.pick); $('#pFile').click(); }
+    else if (r) { prog.draft[prog.day].e.splice(Number(r.dataset.rm), 1); prog.dirty = true; renderProg(); }
   });
+  $('#pEx').addEventListener('error', function (e) {
+    if (e.target.tagName !== 'IMG') return;
+    var b = e.target.closest('.exph'); e.target.remove(); if (b) b.classList.remove('has');
+  }, true);
+  $('#pAdd').addEventListener('click', function () {
+    if (!prog) return;
+    prog.draft[prog.day].e.push({ n: '', s: '', g: '' }); prog.dirty = true; renderProg();
+    var f = $('#pEx').querySelectorAll('input[data-k="n"]'); if (f.length) f[f.length - 1].focus();
+  });
+  $('#pFile').addEventListener('change', function (e) { pickImage(e.target.files[0]); e.target.value = ''; });
+  $('#pCopy').addEventListener('change', function (e) {
+    var m = find(e.target.value); e.target.value = '';
+    if (!m || !prog) return;
+    if (prog.draft.some(dayHas) && !confirm('بەرنامەیا نوکە دێ ب بەرنامەیا ' + m.name + ' هێتە گوهۆڕین. بەردەوام؟')) return;
+    prog.draft = JSON.parse(JSON.stringify(normPlan(m.plan))); prog.dirty = true; renderProg();
+  });
+  $('#pSave').addEventListener('click', saveProg);
+  $('#pCancel').addEventListener('click', function () { closeProg(); });
+  $('#veil5').addEventListener('click', function (e) { if (e.target === this) closeProg(); });
   $('#form').addEventListener('submit', submitForm);
   $('#fCancel').addEventListener('click', closeForm);
   $('#veil').addEventListener('click', function (e) { if (e.target === this) closeForm(); });
@@ -825,6 +986,7 @@
     if (!$('#veil').hidden) closeForm();
     if (!$('#veil3').hidden) closeCloud();
     if (!$('#veil4').hidden) closeLog();
+    if (!$('#veil5').hidden) closeProg();
     if (!$('#res').hidden) $('#res').hidden = true;
   });
   $('#btnExport').addEventListener('click', exportData);

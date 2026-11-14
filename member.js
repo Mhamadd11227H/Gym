@@ -75,13 +75,23 @@
     else if (soon) { warn.hidden = false; warn.textContent = 'ماوەیا ئەندامەتیا تە ب زوویی دێ ب دوماهی هێت. بۆ نویکرنێ سەرەدانا قاعێ بکە.'; }
     else warn.hidden = true;
 
-    var plan = (p.w || []);
+    var plan = p.w || [], dow = (new Date().getDay() + 1) % 7;   /* Saturday = 0 ... Thursday = 5, Friday = 6 */
+    var openAt = plan.findIndex(function (d) { return d.k === dow; });
+    if (openAt < 0) openAt = 0;
     $('#days').innerHTML = plan.length ? plan.map(function (d, i) {
-      var lines = String(d.x || '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
-      return '<details class="day-card"' + (i === 0 ? ' open' : '') + '><summary><span>' + esc(d.t || ('ڕۆژا ' + (i + 1))) + '</span></summary>' +
-        (lines.length ? '<ol>' + lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ol>' : '<p class="muted">ڕاهێنان نەهاتینە دانان.</p>') +
+      var ex = (d.e || []).map(function (z, n) {
+        var img = okImg(z.g)
+          ? '<button type="button" class="exi" data-src="' + esc(z.g) + '" aria-label="' + esc(z.n || 'وێنە') + '"><img src="' + esc(z.g) + '" alt="' + esc(z.n || '') + '" loading="lazy"></button>'
+          : '<span class="exi none">' + (n + 1) + '</span>';
+        return '<div class="ex">' + img + '<div class="ext"><b dir="auto">' + esc(z.n) + '</b>' + (z.s ? '<span>' + esc(z.s) + '</span>' : '') + '</div></div>';
+      }).join('');
+      return '<details class="day-card"' + (i === openAt ? ' open' : '') + '><summary><span>' + esc(d.t || ('ڕۆژا ' + (i + 1))) + (d.f ? '<em>' + esc(d.f) + '</em>' : '') + '</span>' +
+        (d.k === dow ? '<i class="tdy">ئەڤرو</i>' : '') + '</summary>' +
+        (ex ? '<div class="exs">' + ex + '</div>' : '') +
+        (d.x ? '<p class="dnote">' + esc(d.x) + '</p>' : '') +
+        (!ex && !d.x ? '<p class="muted">ڕاهێنان نەهاتینە دانان.</p>' : '') +
         '</details>';
-    }).join('') : '<div class="empty"><h3>هێشتا خشتەیا ڕاهێنانێ نەهاتیە دانان</h3><p>ڕاهێنەرێ تە دێ ئەڤێ بۆ تە زێدە کەت.</p></div>';
+    }).join('') : '<div class="empty"><h3>هێشتا بەرنامەیا ڕاهێنانێ نەهاتیە دانان</h3><p>ڕاهێنەرێ تە دێ ئەڤێ بۆ تە زێدە کەت.</p></div>';
   }
 
   async function login(code, remember) {
@@ -103,6 +113,15 @@
       return false;
     }
   }
+
+  function okImg(g) { return /^img\/[A-Za-z0-9._-]+\.jpg$/.test(g || ''); }
+  /* tap an exercise picture to see it big */
+  $('#days').addEventListener('click', function (e) {
+    var b = e.target.closest('.exi[data-src]'); if (!b) return;
+    $('#lbImg').src = b.dataset.src; $('#lb').hidden = false;
+  });
+  $('#lb').addEventListener('click', function () { this.hidden = true; $('#lbImg').removeAttribute('src'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#lb').hidden) $('#lb').click(); });
 
   $('#loginForm').addEventListener('submit', function (e) {
     e.preventDefault();

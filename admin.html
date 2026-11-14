@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Noto+Kufi+Arabic:wght@600;800&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="admin.css?v=4">
 </head>
 <body>
 <noscript><p style="padding:24px;text-align:center;color:#fff">JavaScript پێدڤییە بۆ ڤەکرنا ڤێ لاپەڕێ.</p></noscript>
@@ -176,12 +176,7 @@
     <small class="sub">تو دشێی کۆدەکێ ب دلێ خۆ بنڤیسی: تنێ پیتێن ئینگلیزی (A-Z) و ژمارە (0-9)، ژ 8 هەتا 24. ناڤ و ژمارا مۆبایلێ بکارنەهینە.</small>
     <div class="codehint" id="fCodeHint" aria-live="polite"></div>
 
-    <div class="plan-h">
-      <span>خشتەیا ڕاهێنانێ</span>
-      <select id="fCopy" aria-label="کۆپیکرنا خشتەیێ ژ ئەندامەکێ دی"><option value="">کۆپی ژ ئەندامەکێ دی…</option></select>
-    </div>
-    <div id="fPlan" class="planed"></div>
-    <button type="button" class="addday" id="fAddDay">+ ڕۆژا نوی</button>
+    <p class="sub planhint">بەرنامەیا ڕاهێنانێ (ڕۆژێن هەفتێ ب ئامادەیی) پشتی پاشەکەفتکرنێ دێ بۆ تە ڤەبیت. ل سەر کارتێ ئەندامی ژی دوگمەیا «بەرنامەیا ڕاهێنانێ» هەیە.</p>
 
     <div class="pay">
       <div class="seg" id="fPay" role="group" aria-label="دۆخێ پارەدانێ">
@@ -195,6 +190,30 @@
       <button type="button" class="cancel" id="fCancel">پاشگەز بوون</button>
     </div>
   </form>
+</div>
+
+<!-- بەرنامەیا ڕاهێنانێ -->
+<div class="veil" id="veil5" hidden>
+  <div class="sheet prog" id="prog" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+    <h2 id="pTitle">بەرنامەیا ڕاهێنانێ</h2>
+    <div class="wtabs" id="pTabs" role="tablist" aria-label="ڕۆژێن هەفتێ"></div>
+    <label for="pFocus">ئەڤ ڕۆژە چ دکەت؟ (بۆ نموونە: سنگ و ترایسێپس)</label>
+    <input id="pFocus" autocomplete="off">
+    <div class="exl" id="pEx"></div>
+    <button type="button" class="addday" id="pAdd">+ ڕاهێنانەک</button>
+    <label for="pNote">تێبینی بۆ ڤی ڕۆژی (نەچاری)</label>
+    <textarea id="pNote"></textarea>
+    <div class="plan-h" id="pCopyBox"><span>کۆپیکرن</span>
+      <select id="pCopy" aria-label="کۆپیکرنا بەرنامەیێ ژ ئەندامەکێ دی"><option value="">کۆپیکرنا بەرنامەیێ ژ ئەندامەکێ دی…</option></select>
+    </div>
+    <datalist id="exNames"></datalist>
+    <input type="file" id="pFile" accept="image/*" hidden>
+    <div class="err" id="pErr" role="alert"></div>
+    <div class="sheet-acts">
+      <button type="button" class="go" id="pSave">پاشەکەفت</button>
+      <button type="button" class="cancel" id="pCancel">داخستن</button>
+    </div>
+  </div>
 </div>
 
 <!-- پاراستنا کۆدکری ل GitHub -->
@@ -244,7 +263,7 @@
   });
 })();
 </script>
-<script src="crypto.js?v=3"></script>
-<script src="app.js?v=3"></script>
+<script src="crypto.js?v=4"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
