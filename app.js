@@ -117,6 +117,7 @@
     $('#gOwner').value = owner;
     $('#gRepo').value = repo;
     $('#gBranch').value = c.branch || 'main';
+    $('#gDetails').hidden = !!(owner && repo);
     $('#gDetails').open = !(owner && repo);
     $('#gRemember').checked = false;
   }
@@ -184,7 +185,7 @@
     };
     var err = $('#gErr'); err.textContent = '';
     if (!c.token) { err.textContent = 'تۆکنێ بنڤیسە.'; $('#gToken').focus(); return; }
-    if (!c.owner || !c.repo) { $('#gDetails').open = true; err.textContent = 'ناڤێ بەکارهێنەرێ GitHub و Repository بنڤیسە.'; return; }
+    if (!c.owner || !c.repo) { $('#gDetails').hidden = false; $('#gDetails').open = true; err.textContent = 'ناڤێ بەکارهێنەرێ GitHub و Repository بنڤیسە.'; return; }
     gateBusy(true);
     try { await unlock(c, $('#gRemember').checked); }
     catch (x) { err.textContent = ghErr(x); }

@@ -11,26 +11,34 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Noto+Kufi+Arabic:wght@600;800&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=4">
-<link rel="stylesheet" href="admin.css?v=8">
+<link rel="stylesheet" href="admin.css?v=9">
 </head>
 <body>
 <noscript><p style="padding:24px;text-align:center;color:#fff">JavaScript پێدڤییە بۆ ڤەکرنا ڤێ لاپەڕێ.</p></noscript>
 
 
 <!-- گەیتێ تۆکنی: هەتا تۆکن نەهێتە نڤیسین و پشتڕاست کرن، تنێ ڤێ بەشێ دیار دبیت -->
-<div class="wrap narrow" id="gate">
-  <header class="top">
-    <div class="brand"><i></i><div>FORGE<small>GYM</small></div></div>
-  </header>
-  <section class="login">
+<div class="wrap narrow gt" id="gate">
+  <div class="gt-glow" aria-hidden="true"></div>
+  <main class="gt-card">
+    <div class="gt-logo" aria-hidden="true"><span>F</span></div>
+    <div class="gt-brand">FORGE<small>GYM</small></div>
     <h1>بەشێ خودانی</h1>
-    <p>بۆ ڤەکرنا ڤێ لاپەڕێ، تۆکنا GitHub بنڤیسە. هەتا تۆکن نەهێتە نڤیسین چ تشت ناهێتە نیشاندان.</p>
+    <p class="gt-sub">تۆکنێ خۆ بنڤیسە دا بچییە ژوورڤە</p>
     <form id="gateForm" novalidate>
-      <label for="gToken">تۆکن (Token)</label>
-      <input id="gToken" class="f" type="password" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="gt-field">
+        <svg class="gt-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12.5L20 4M16 8l3 3M14 10l2 2"/></svg>
+        <input id="gToken" class="gt-in" type="password" placeholder="github_pat_…" aria-label="تۆکن" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button type="button" class="gt-eye" id="gEye" aria-label="نیشاندان / ڤەشارتن">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div class="err gt-err" id="gErr" role="alert"></div>
+      <button class="gt-go" id="gBtn" type="submit">چوونە ژوورڤە</button>
 
-      <details class="how" id="gDetails">
-        <summary>ڕێکخستنێن GitHub (ناڤێ بەکارهێنەری و Repository)</summary>
+      <!-- ئەڤ بەشە ب خۆ دهێتە ڤەشارتن؛ تنێ ئەگەر ناڤێ GitHub ب خۆ نەهێتە دیتن دیار دبیت -->
+      <details class="how gt-more" id="gDetails" hidden>
+        <summary>ڕێکخستنێن GitHub</summary>
         <label for="gOwner">ناڤێ بەکارهێنەرێ GitHub</label>
         <input id="gOwner" class="f" autocomplete="off" autocapitalize="off" spellcheck="false">
         <label for="gRepo">ناڤێ Repository</label>
@@ -38,24 +46,13 @@
         <label for="gBranch">Branch</label>
         <input id="gBranch" class="f" value="main" autocomplete="off" autocapitalize="off" spellcheck="false">
       </details>
-
-      <label class="remember"><input id="gRemember" type="checkbox"> تۆکنێ ل سەر ڤی ئامێری بپارێزە (نە پێشنیارکرییە)</label>
-      <div class="err" id="gErr" role="alert"></div>
-      <button class="btn-add wide" id="gBtn" type="submit">چوونە ژوورڤە</button>
+      <input id="gRemember" type="checkbox" hidden>
     </form>
-
-    <details class="how">
-      <summary>تۆکن چاوا چێ دبیت؟</summary>
-      <ol>
-        <li>بچە GitHub ← وێنەیێ پرۆفایلی ← Settings ← Developer settings</li>
-        <li>Personal access tokens ← Fine-grained tokens ← Generate new token</li>
-        <li>Expiration: 1 year. د Repository access دا تنێ ڕیپۆیێ ڤی سایتی هەلبژێرە</li>
-        <li>د Permissions ← Repository permissions ← <b>Contents</b> بکە <b>Read and write</b></li>
-        <li>Generate token، پاشی کۆپی بکە و ل ڤێرێ دانە.</li>
-      </ol>
-    </details>
-  </section>
+  </main>
 </div>
+<script>
+(function(){var b=document.getElementById('gEye'),i=document.getElementById('gToken');if(b&&i)b.addEventListener('click',function(){i.type=i.type==='password'?'text':'password';b.classList.toggle('on',i.type==='text');i.focus();});})();
+</script>
 
 <!-- لاپەڕێ سەرەکی: تا گەیت ڤەنەبیت هەر ڤەشارتی دمینیت -->
 <div id="app" hidden>

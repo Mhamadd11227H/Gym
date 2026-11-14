@@ -251,3 +251,33 @@ button.re:active{opacity:.7}
 .pu button{width:100%;padding:12px;border-radius:10px;font-weight:800;background:var(--surface-2);border:1px solid var(--line)}
 .pu.bad button{background:var(--bad);border-color:transparent;color:#fff}
 .pu button:disabled{opacity:.6}
+
+/* ===== دەروازەیا تۆکنی: دیزاینا نوی (تنێ تۆکن) ===== */
+#gate.gt:not([hidden]){position:relative;min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 18px;overflow:hidden}
+.gt-glow{position:absolute;inset:auto -20% -30% -20%;height:70%;background:radial-gradient(60% 60% at 50% 100%,rgba(255,106,31,.38),transparent 70%);filter:blur(10px);pointer-events:none;animation:gtBreath 6s ease-in-out infinite}
+@keyframes gtBreath{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.gt-card{position:relative;z-index:1;width:100%;max-width:400px;padding:36px 26px 28px;text-align:center;border:1px solid rgba(255,255,255,.08);border-radius:26px;background:linear-gradient(160deg,rgba(31,36,44,.92),rgba(18,21,26,.94));box-shadow:0 30px 80px -30px rgba(0,0,0,.9),0 0 0 1px rgba(255,106,31,.06),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(14px);animation:gtIn .6s cubic-bezier(.2,.8,.2,1) both}
+.gt-card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;border-radius:26px 26px 0 0;background:linear-gradient(90deg,transparent,var(--red),var(--hot),var(--red),transparent)}
+@keyframes gtIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+.gt-logo{width:72px;height:72px;margin:0 auto 14px;display:grid;place-items:center;border-radius:20px;background:linear-gradient(160deg,var(--hot),var(--red));box-shadow:0 14px 40px -10px rgba(255,106,31,.8),inset 0 2px 0 rgba(255,255,255,.35);transform:rotate(-6deg)}
+.gt-logo span{font:700 40px/1 var(--font-display);color:#1a0c04;transform:rotate(6deg)}
+.gt-brand{font:700 26px/1 var(--font-display);letter-spacing:.2em;color:var(--fg);direction:ltr}
+.gt-brand small{margin-inline-start:8px;color:var(--red);letter-spacing:.3em;font-size:26px}
+.gt-card h1{margin:22px 0 6px;font-family:var(--font-head,'Noto Kufi Arabic'),sans-serif;font-weight:800;font-size:24px;line-height:1.4}
+.gt-sub{margin:0 0 24px;color:var(--muted);font-size:14.5px}
+.gt-field{position:relative;display:flex;align-items:center;border:1.5px solid var(--line);border-radius:14px;background:rgba(8,10,13,.7);transition:border-color .2s,box-shadow .2s}
+.gt-field:focus-within{border-color:var(--red);box-shadow:0 0 0 4px rgba(255,106,31,.16)}
+.gt-ic,.gt-eye svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gt-ic{flex:none;margin-inline-start:14px;color:var(--muted)}
+.gt-field:focus-within .gt-ic{color:var(--red)}
+.gt-in{flex:1;min-width:0;padding:16px 12px;background:none;border:0;outline:0;color:var(--fg);font-size:16px;direction:ltr;text-align:start;letter-spacing:.04em}
+.gt-in::placeholder{color:#5d6672;letter-spacing:0}
+.gt-eye{flex:none;margin-inline-end:6px;padding:10px;border-radius:10px;color:var(--muted);background:none;border:0;cursor:pointer}
+.gt-eye:hover,.gt-eye.on{color:var(--hot)}
+.gt-err{min-height:22px;margin:10px 0 4px;text-align:center}
+.gt-go{width:100%;padding:16px;border:0;border-radius:14px;font:800 17px/1 var(--font-head,'Noto Kufi Arabic'),sans-serif;color:#1a0c04;background:linear-gradient(180deg,var(--hot),var(--red));box-shadow:0 14px 34px -12px rgba(255,106,31,.9),inset 0 1px 0 rgba(255,255,255,.4);cursor:pointer;transition:transform .15s,filter .2s}
+.gt-go:hover{filter:brightness(1.08)}.gt-go:active{transform:scale(.98)}
+.gt-go:disabled{opacity:.6;cursor:wait}
+.gt-more{margin-top:18px;text-align:start}
+.gt-more[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.gt-glow,.gt-card{animation:none}}
