@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Noto+Kufi+Arabic:wght@600;800&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=4">
-<link rel="stylesheet" href="admin.css?v=5">
+<link rel="stylesheet" href="admin.css?v=6">
 </head>
 <body>
 <noscript><p style="padding:24px;text-align:center;color:#fff">JavaScript پێدڤییە بۆ ڤەکرنا ڤێ لاپەڕێ.</p></noscript>
@@ -97,7 +97,7 @@
     <div class="stat"><span>کۆمێ ئەندامان</span><b id="sTotal">0</b></div>
     <div class="stat ok"><span>پارە دایە</span><b id="sPaid">0</b></div>
     <div class="stat red"><span>پارە نەدایە</span><b id="sUnpaid">0</b></div>
-    <div class="stat"><span>کۆمێ پارەیێ وەرگرتی</span><b id="sSum">0<em>د.ع</em></b></div>
+    <div class="stat"><span>داهاتێ ئەڤ هەیڤێ</span><b id="sSum">0<em>د.ع</em></b></div>
   </section>
 
   <section class="desk" data-view="members">
@@ -115,15 +115,40 @@
   </main>
 
   <section class="money" data-view="money" aria-label="پارە و خەرجی">
-    <h2 class="pg">پارە و خەرجی</h2>
-    <div class="mrep" id="mrep"></div>
-    <h3 class="pg-s">خەرجیەکا نوی</h3>
-    <form class="xform" id="xform" novalidate>
-      <input id="xT" autocomplete="off" placeholder="خەرجی چ بوو؟ (کارەبا، کرێ، ئامێر…)" aria-label="ناڤێ خەرجیێ">
-      <input id="xA" class="ltr" type="number" inputmode="numeric" min="0" step="500" placeholder="نرخ (دینار)" aria-label="نرخ">
-      <button class="btn-add" type="submit">+ خەرجی</button>
+    <div class="mhead">
+      <h2 class="pg">پارە</h2>
+      <div class="mnav">
+        <button type="button" id="mPrev" aria-label="هەیڤا بوری"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <b id="mLabel"></b>
+        <button type="button" id="mNext" aria-label="هەیڤا دوایی"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      </div>
+    </div>
+
+    <div id="mHero"></div>
+    <div class="dstrip" id="dstrip" aria-label="ڕۆژێن هەیڤێ"></div>
+
+    <div class="mlock" id="mLock" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+      <span>ئەڤ ڕۆژە چوو و داخراوە. نابێت تشتەکی تێدا بهێتە زێدەکرن، گوهۆڕین یان ژێبرن.</span>
+    </div>
+
+    <form class="qa" id="mAdd" novalidate>
+      <div class="seg" id="qKind" role="group" aria-label="جۆرێ تۆمارێ">
+        <button type="button" class="yes on" data-k="in">داهات</button>
+        <button type="button" class="no" data-k="out">خەرجی</button>
+      </div>
+      <div class="qa-row">
+        <input id="qT" autocomplete="off" aria-label="ناڤ">
+        <input id="qA" class="ltr" type="number" inputmode="numeric" min="0" step="500" placeholder="نرخ (دینار)" aria-label="نرخ">
+      </div>
+      <div class="qchips" id="qChips" aria-label="زێدەکرنا زویی">
+        <button type="button" data-add="1000">+1,000</button><button type="button" data-add="5000">+5,000</button><button type="button" data-add="10000">+10,000</button><button type="button" data-add="25000">+25,000</button>
+      </div>
+      <button class="btn-add" id="qBtn" type="submit">+ داهات</button>
     </form>
-    <div class="xlist" id="xlist"></div>
+
+    <div id="mList"></div>
+    <div class="msum" id="mSum"></div>
   </section>
 
   <footer class="foot" data-view="more">
@@ -147,6 +172,24 @@
 
 <!-- زانیاریێن ئەندامی: دهێت ڤەکرن دەمێ کلیک ل سەر ناڤی دهێتە کرن -->
 <div class="veil" id="veil6" hidden><div id="detail"></div></div>
+
+<!-- گوهۆڕینا تۆمارەکا پارەیێ یا ئەڤرو -->
+<div class="veil" id="veil7" hidden>
+  <form class="sheet" id="eform" role="dialog" aria-modal="true" aria-labelledby="eH" novalidate>
+    <h2 id="eH">گوهۆڕینا تۆمارێ</h2>
+    <p class="muted-p" id="eInfo"></p>
+    <label for="eT">ناڤ</label>
+    <input id="eT" autocomplete="off">
+    <label for="eA">نرخ (دینار)</label>
+    <input id="eA" class="ltr" type="number" inputmode="numeric" min="0" step="500">
+    <div class="err" id="eErr" role="alert"></div>
+    <div class="sheet-acts">
+      <button type="submit" class="go">پاشەکەفت</button>
+      <button type="button" class="cancel" id="eCancel">داخستن</button>
+    </div>
+    <button type="button" class="e-del" id="eDel">ژێبرنا ئەڤ تۆمارێ</button>
+  </form>
+</div>
 
 <!-- فۆرما ئەندامی -->
 <div class="veil" id="veil" hidden>
@@ -279,6 +322,6 @@
 })();
 </script>
 <script src="crypto.js?v=4"></script>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

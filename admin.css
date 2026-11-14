@@ -145,3 +145,91 @@ body{background:radial-gradient(70% 34% at 50% 115%,rgba(255,106,31,.25),transpa
 .ph-del{margin-top:4px;padding:2px 0;color:var(--bad);font-size:13px;font-weight:700}
 .sheet .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 @media(max-width:440px){.sheet .three{grid-template-columns:1fr}}
+
+/* ===== v6: کاشێر (پارە) ===== */
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 14px}
+.mhead .pg{margin:0}
+.mnav{display:flex;align-items:center;gap:2px;padding:4px;border:1px solid var(--line);border-radius:99px;background:var(--surface)}
+.mnav button{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;color:var(--fg)}
+.mnav button:disabled{opacity:.28;cursor:default}
+.mnav button:not(:disabled):active{background:var(--surface-2)}
+.mnav svg,.mlock svg,.mh-st svg,.ri svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mnav svg{width:20px;height:20px}
+.mnav b{min-width:116px;text-align:center;font:800 14.5px var(--font-head)}
+
+/* the big card of the chosen day */
+.mh{position:relative;overflow:hidden;padding:20px 18px 18px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(160deg,var(--surface-2),var(--surface) 62%)}
+.mh::after{content:"";position:absolute;inset:-55% auto auto -12%;width:62%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,106,31,.26),transparent 65%);pointer-events:none}
+.mh.shut::after{background:radial-gradient(circle,rgba(151,160,172,.16),transparent 65%)}
+.mh>*{position:relative;z-index:1}
+.mh-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mh-date{font-size:16px;line-height:1.4}.mh-date b{font-family:var(--font-head);font-weight:800}.mh-date span{color:var(--muted)}
+.mh-st{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:99px;font-size:13px;font-weight:700;color:var(--hot);background:rgba(255,106,31,.14);border:1px solid rgba(255,106,31,.45)}
+.mh.shut .mh-st{color:var(--muted);background:var(--bg);border-color:var(--line)}
+.mh-st svg{width:15px;height:15px}
+.mh-lbl{margin-top:18px;font-size:13px;color:var(--muted)}
+.mh-big{display:flex;align-items:baseline;gap:10px;margin-top:2px}
+.mh-big span{font:700 58px/1.05 var(--font-display);letter-spacing:.5px;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff3dc,var(--hot) 45%,var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mh.shut .mh-big span{background:none;color:var(--fg)}
+.mh-big em{font-style:normal;font-size:15px;color:var(--muted)}
+.mh-row{display:grid;grid-template-columns:1fr 1fr;margin-top:18px;padding-top:14px;border-top:1px dashed var(--line)}
+.mh-row>div+div{padding-inline-start:16px;border-inline-start:1px dashed var(--line)}
+.mh-row small{display:block;font-size:12.5px;color:var(--muted)}
+.mh-row b{display:block;font:700 26px/1.3 var(--font-display);font-variant-numeric:tabular-nums;text-align:start}
+.g{color:var(--ok)}.r{color:var(--bad)}
+
+/* days of the month: each pill is also a tiny bar chart */
+.dstrip{display:flex;gap:8px;overflow-x:auto;margin-inline:-16px;padding:16px 16px 8px;scroll-snap-type:x proximity;scrollbar-width:none}
+.dstrip::-webkit-scrollbar{display:none}
+.dp{position:relative;flex:none;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;width:54px;padding:9px 0 8px;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--muted);transition:border-color .2s,background .2s}
+.dp small{font-size:11.5px;font-weight:700}
+.dp .bar{display:flex;align-items:flex-end;width:16px;height:46px;border-radius:8px;background:var(--bg);overflow:hidden}
+.dp .bar i{display:block;width:100%;border-radius:8px 8px 0 0;background:linear-gradient(var(--hot),var(--red))}
+.dp b{font:700 17px/1 var(--font-display);color:var(--fg)}
+.dp u{display:block;width:5px;height:5px;border-radius:50%;background:transparent}.dp u.x{background:var(--bad)}
+.dp.td small{color:var(--hot)}
+.dp.on{border-color:var(--red);background:rgba(255,106,31,.14)}
+.dp.on small{color:var(--hot)}
+
+.mlock{display:flex;align-items:center;gap:12px;margin-top:6px;padding:12px 14px;border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:13.5px;line-height:1.6}
+.mlock svg{flex:none;width:22px;height:22px}
+
+/* add an income / an expense */
+.qa{display:grid;gap:10px;margin-top:6px;padding:14px;border:1px solid var(--line);border-radius:20px;background:var(--surface)}
+.qa .seg .yes.on{background:var(--ok)}
+.qa-row{display:grid;grid-template-columns:1.25fr 1fr;gap:8px}
+.qa input{min-width:0;padding:13px 14px;background:var(--bg);border:1px solid var(--line);border-radius:12px;font-size:16px}
+.qa input:focus{border-color:var(--red);outline:0}
+.qa .ltr{direction:ltr;text-align:start}
+.qchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.qchips::-webkit-scrollbar{display:none}
+.qchips button{flex:none;padding:6px 14px;border:1px solid var(--line);border-radius:99px;background:var(--bg);color:var(--muted);font:700 13px var(--font-display);direction:ltr}
+.qchips button:active{border-color:var(--red);color:var(--hot)}
+.btn-add.out{background:linear-gradient(180deg,#ff8a8d,var(--bad));color:#2a0708;box-shadow:0 8px 26px -10px rgba(255,90,95,.8)}
+
+/* the till roll: lines of the day, torn at the bottom */
+.rc{--paper:#1b2027;position:relative;margin:18px 0 24px;padding:16px 16px 8px;border:1px solid var(--line);border-bottom:0;border-radius:20px 20px 0 0;background:var(--paper)}
+.rc::after{content:"";position:absolute;inset-inline:-1px;bottom:-10px;height:10px;background:linear-gradient(135deg,var(--paper) 25%,transparent 25%) -10px 0,linear-gradient(225deg,var(--paper) 25%,transparent 25%) -10px 0;background-size:20px 20px}
+.rc-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font:800 15px var(--font-head)}
+.rc-h span{min-width:28px;padding:0 8px;border-radius:99px;background:var(--bg);color:var(--hot);font:700 14px/26px var(--font-display);text-align:center}
+.re{display:flex;align-items:center;gap:12px;width:100%;padding:12px 0;text-align:start;border-bottom:1px dashed var(--line)}
+.re:last-child{border-bottom:0}
+button.re:active{opacity:.7}
+.ri{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:50%}
+.ri svg{width:19px;height:19px}
+.ri.in{background:rgba(95,211,154,.14);color:var(--ok)}.ri.out{background:rgba(255,90,95,.14);color:var(--bad)}
+.tt{flex:1;min-width:0}.tt b{display:block;font-weight:700;line-height:1.45;overflow-wrap:anywhere}.tt small{font-size:12px;color:var(--muted)}
+.am{flex:none;font:700 19px var(--font-display);font-variant-numeric:tabular-nums}.am.in{color:var(--ok)}.am.out{color:var(--bad)}
+.rc-e{margin:10px 0 14px;color:var(--muted);font-size:13.5px;line-height:1.7}
+
+/* the month */
+.msum{padding:16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,var(--surface-2),var(--surface))}
+.msum h3{margin:0 0 12px;font:800 16px var(--font-head)}
+.msum dl{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin:0}
+.msum dt{font-size:12.5px;color:var(--muted)}
+.msum dd{margin:0;font:700 21px/1.35 var(--font-display);font-variant-numeric:tabular-nums;text-align:start}
+.msum dd small{font-size:13px;color:var(--muted)}
+.msum div:nth-child(5) dd{font:700 15px/1.6 var(--font-head)}
+
+.e-del{display:block;width:100%;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;color:var(--bad);font-weight:700}
+.e-del.sure{background:var(--bad);border-color:var(--bad);color:#fff}
+.sheet input:disabled{opacity:.6}

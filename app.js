@@ -335,7 +335,6 @@
     $('#sTotal').textContent = total;
     $('#sPaid').textContent = paid.length;
     $('#sUnpaid').textContent = total - paid.length;
-    $('#sSum').innerHTML = fmt(sum) + '<em>د.ع</em>';
 
     var expiredN = members.filter(function (m) { return info(m).expired; }).length;
     var soonN = members.filter(function (m) { var i = info(m); return !i.expired && i.days <= 5; }).length;
@@ -461,16 +460,24 @@
   /* ---------- actions ---------- */
   function setPaid(id, val) {
     var m = find(id); if (!m || !!m.paid === val) return;
+    if (!val && m.paidAt && m.paidAt < todayISO()) { toast('ئەڤ پارەدانە ل ڕۆژەکا بوری هاتیە و داخراوە. نابێت هەلبوەشێ.', true); return; }
     if (val) addPay(m, Number(m.amount) || 0); else dropPay(m);
     save(Object.assign({}, m, { paid: val, paidAt: val ? todayISO() : null }));
     logEv(val ? 'ok' : 'warn', m.name + (val ? ': پارەدان هاتە تۆمارکرن (' + fmt(m.amount) + ' دینار)' : ': وەک پارە نەدایی هاتە دانان'));
     toast(val ? 'پارەدان هاتە تۆمارکرن' : 'وەک پارە نەدایی هاتە دانان');
   }
-  function addPay(m, a) { if (pays === null) renderMoney(); pays.push({ d: todayISO(), a: a, n: m.name, i: m.id }); jset(LSP, pays); }
-  function dropPay(m) {
-    if (pays === null) renderMoney();
-    for (var z = pays.length - 1; z >= 0; z--) if (pays[z].i ? pays[z].i === m.id : pays[z].n === m.name) { pays.splice(z, 1); break; }
-    jset(LSP, pays);
+  /* تۆمارا پارەیێ: هەر پارەدانەک/خەرجیەک ب ڕۆژی خۆ یێ دهێتە تۆمارکرن. تنێ ڕۆژا ئەڤرو دهێتە گوهۆڕین، ڕۆژێن بوری داخراوینە */
+  function nowHM() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function newT() { var t = Date.now(); while (pays.some(function (x) { return x.t === t; }) || expenses.some(function (x) { return x.t === t; })) t++; return t; }
+  function memberPayIdx(m) {
+    for (var z = pays.length - 1; z >= 0; z--) { var p = pays[z]; if (p.d === todayISO() && !p.m && (p.i ? p.i === m.id : p.n === m.name)) return z; }
+    return -1;
+  }
+  function addPay(m, a) { moneyInit(); pays.push({ t: newT(), d: todayISO(), h: nowHM(), a: a, n: m.name, i: m.id }); jset(LSP, pays); }
+  function dropPay(m) { moneyInit(); var z = memberPayIdx(m); if (z >= 0) { pays.splice(z, 1); jset(LSP, pays); } }
+  function syncPay(m, a) {
+    moneyInit(); var z = memberPayIdx(m);
+    if (z >= 0) { pays[z].a = a; pays[z].n = m.name; jset(LSP, pays); } else addPay(m, a);
   }
   function checkIn(id) {
     var m = find(id); if (!m) return;
@@ -564,6 +571,7 @@
     var prob = codeProblem(codeRaw, editingId, $('#fPhone').value, old);
     if (prob) { $('#fErr').textContent = prob; $('#fCode').focus(); return; }
     var paid = payVal === 1;
+    if (old && old.paid && !paid && old.paidAt && old.paidAt < todayISO()) { $('#fErr').textContent = 'ئەڤ ئەندامە ل ڕۆژەکا بوری پارە داییە و ئەو ڕۆژە داخراوە. نابێت ببیتە «پارە نەدایە».'; return; }
     save(Object.assign({}, old || {}, {
       id: old ? old.id : newId(),
       name: name, amount: amount,
@@ -582,10 +590,12 @@
     var sid = old ? old.id : members[0].id;   /* a new member is put first by save() */
     if (paid && !(old && old.paid)) addPay({ id: sid, name: name }, amount);
     else if (!paid && old && old.paid) dropPay({ id: old.id, name: old.name });   /* was missing: un-paying from the form left the income in the report */
+    else if (paid && old && old.paid && old.paidAt === todayISO()) syncPay({ id: old.id, name: name }, amount);   /* the amount was changed today: the till follows */
+    var pastNote = !!(paid && old && old.paid && old.paidAt && old.paidAt < todayISO() && Number(old.amount) !== amount);
     renderMoney();
     logEv(old ? 'hot' : 'ok', old ? 'زانیاریێن ' + name + ' هاتنە گوهۆڕین' : 'ئەندامێ نوی هاتە زێدەکرن: ' + name);
     closeForm();
-    toast(old ? 'گوهورین هاتنە پاشەکەفتکرن' : 'ئەندام هاتە تۆمارکرن');
+    toast(pastNote ? 'نرخ هاتە گوهۆڕین. بەلێ پارەدانا ڕۆژا بوری ناهێتە گوهۆڕین، چونکی داخراوە.' : (old ? 'گوهورین هاتنە پاشەکەفتکرن' : 'ئەندام هاتە تۆمارکرن'));
     if (!old) openProg(sid);   /* straight on to writing his exercises */
   }
 
@@ -1079,6 +1089,7 @@
   $('#veil').addEventListener('click', function (e) { if (e.target === this) closeForm(); });
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
+    if (!$('#veil7').hidden) { closeEntry(); return; }
     if (!$('#veil').hidden) { closeForm(); return; }
     if (!$('#veil5').hidden) { closeProg(); return; }
     if (!$('#veil6').hidden) closeDetail();
@@ -1103,6 +1114,7 @@
     document.querySelectorAll('[data-view]').forEach(function (el) { el.classList.toggle('vhide', el.dataset.view !== t); });
     document.querySelectorAll('#tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.t === t); });
     try { history.replaceState(null, '', '#' + t); } catch (e) {}
+    if (t === 'money') { mScroll = true; renderMoney(); }
     window.scrollTo(0, 0);
   }
 
@@ -1118,41 +1130,204 @@
     return list.filter(function (p) { return String(p.d).slice(0, 7) === key; }).reduce(function (s, p) { return s + (Number(p.a) || 0); }, 0);
   }
 
-  /* داهات (پارەدان) ــ خەرجی = پوخت، بۆ 3 هەیڤێن دوماهیێ */
+  /* ====== کاشێر: داهات و خەرجی ب ڕۆژ ====== */
+  var MONTHS = ['کانوونا دووێ', 'شوبات', 'ئادار', 'نیسان', 'ئایار', 'حوزەیران', 'تەمووز', 'ئاب', 'ئەیلوول', 'تشرینا ئێکێ', 'تشرینا دووێ', 'کانوونا ئێکێ'];
+  var DAYN = ['ئێک شەمب', 'دوو شەمب', 'سێ شەمب', 'چار شەمب', 'پێنج شەمب', 'ئینی', 'شەممە'];
+  var DAYS = ['ئێک', 'دوو', 'سێ', 'چار', 'پێنج', 'ئینی', 'شەم'];
+  var mDay = null, mKind = 'in', mScroll = true, editEnt = null, eConfirm = false;
+  var ICON_IN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+  var ICON_OUT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
+  var ICON_LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+
+  function sel() { var t = todayISO(); return (mDay && mDay < t) ? mDay : t; }
+
+  /* جارا یەکێ: تۆمارەکێ ژ ئەندامێن پارە داین چێ بکە. هەر تۆمارەکێ ژمارەیەکا تایبەت بدە */
+  function moneyInit() {
+    var changed = false;
+    if (pays === null) {
+      pays = members.filter(function (m) { return m.paid && m.paidAt; }).map(function (m) { return { d: m.paidAt, a: Number(m.amount) || 0, n: m.name, i: m.id }; });
+      changed = true;
+    }
+    var seen = {}, n = Date.now();
+    [pays, expenses].forEach(function (arr, k) {
+      arr.forEach(function (e) {
+        var a = Number(e.a) || 0; if (a !== e.a) { e.a = a; changed = true; }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(e.d || '')) { e.d = todayISO(); changed = true; }
+        if (typeof e.t !== 'number' || seen[e.t]) { e.t = n++; changed = true; }
+        seen[e.t] = 1;
+      });
+    });
+    if (changed) { jset(LSP, pays); jset(LSX, expenses); }
+  }
+
+  function moneyOf(day) {
+    var L = [], inc = 0, out = 0;
+    pays.forEach(function (p) { if (p.d === day) { L.push({ k: 'in', e: p }); inc += p.a; } });
+    expenses.forEach(function (x) { if (x.d === day) { L.push({ k: 'out', e: x }); out += x.a; } });
+    L.sort(function (a, b) { return (b.e.h || '').localeCompare(a.e.h || '') || b.e.t - a.e.t; });
+    return { L: L, inc: inc, out: out };
+  }
+  var sgn = function (n) { return (n < 0 ? '-' : '') + fmt(Math.abs(n)); };
+
   function renderMoney() {
-    if (pays === null) {   /* جارا یەکێ: ژ ئەندامێن پارە داین تۆمارەکێ چێ بکە */
-      pays = members.filter(function (m) { return m.paid && m.paidAt; }).map(function (m) { return { d: m.paidAt, a: Number(m.amount) || 0, n: m.name }; });
-      jset(LSP, pays);
+    if (!$('#mHero')) return;
+    moneyInit();
+    var today = todayISO(), day = sel(), isToday = day === today, key = day.slice(0, 7), curKey = today.slice(0, 7);
+    var y = Number(key.slice(0, 4)), mo = Number(key.slice(5, 7)) - 1, dim = new Date(y, mo + 1, 0).getDate();
+    var last = key === curKey ? Number(today.slice(8)) : dim;
+    var d0 = parseISO(day), dm = moneyOf(day), net = dm.inc - dm.out;
+
+    $('#mLabel').innerHTML = MONTHS[mo] + ' <span dir="ltr">' + y + '</span>';
+    $('#mNext').disabled = key >= curKey;
+
+    /* the big card for the chosen day */
+    $('#mHero').className = 'mh ' + (isToday ? 'open' : 'shut');
+    $('#mHero').innerHTML =
+      '<div class="mh-top"><div class="mh-date"><b>' + DAYN[d0.getDay()] + '</b><span> ' + d0.getDate() + ' ' + MONTHS[d0.getMonth()] + '</span></div>' +
+      '<span class="mh-st">' + (isToday ? 'ئەڤرو' : ICON_LOCK + 'داخراوە') + '</span></div>' +
+      '<div class="mh-lbl">داهاتێ ڤی ڕۆژی</div>' +
+      '<div class="mh-big"><span dir="ltr">' + fmt(dm.inc) + '</span><em>د.ع</em></div>' +
+      '<div class="mh-row"><div><small>خەرجی</small><b class="r" dir="ltr">' + fmt(dm.out) + '</b></div>' +
+      '<div><small>پوخت</small><b class="' + (net < 0 ? 'r' : 'g') + '" dir="ltr">' + sgn(net) + '</b></div></div>';
+
+    /* month bars: one pill per day, tap to open the day */
+    var inc = [], outs = [], mx = 1, mInc = 0, mOut = 0, cnt = 0, bestD = 0, bestA = 0, daysWith = 0;
+    for (var i = 1; i <= dim; i++) { inc[i] = 0; outs[i] = 0; }
+    pays.forEach(function (p) { if (String(p.d).slice(0, 7) === key) { var dd = Number(p.d.slice(8)); inc[dd] += p.a; mInc += p.a; cnt++; } });
+    expenses.forEach(function (x) { if (String(x.d).slice(0, 7) === key) { var dd = Number(x.d.slice(8)); outs[dd] += x.a; mOut += x.a; } });
+    for (i = 1; i <= last; i++) { if (inc[i] > mx) mx = inc[i]; if (inc[i] > bestA) { bestA = inc[i]; bestD = i; } if (inc[i] > 0) daysWith++; }
+    var strip = '';
+    for (i = 1; i <= last; i++) {
+      var iso = key + '-' + pad(i), wd = new Date(y, mo, i).getDay();
+      strip += '<button type="button" class="dp' + (iso === day ? ' on' : '') + (iso === today ? ' td' : '') + '" data-d="' + iso + '" aria-label="' + i + ' ' + MONTHS[mo] + '"' + (iso === day ? ' aria-current="date"' : '') + '>' +
+        '<small>' + DAYS[wd] + '</small><span class="bar"><i style="height:' + (inc[i] ? Math.max(8, Math.round(inc[i] / mx * 100)) : 0) + '%"></i></span><b>' + i + '</b>' +
+        '<u class="' + (outs[i] ? 'x' : '') + '"></u></button>';
     }
-    var now = new Date(), cards = '';
-    for (var k = 0; k < 3; k++) {
-      var key = toISO(new Date(now.getFullYear(), now.getMonth() - k, 1)).slice(0, 7);
-      var inc = sumBy(pays, key), out = sumBy(expenses, key), net = inc - out;
-      cards += '<div class="mc' + (k ? '' : ' cur') + '"><small>' + (k ? key : 'ئەڤ هەیڤە (' + key + ')') + '</small><dl>' +
-        '<div><dt>داهات</dt><dd class="g">' + fmt(inc) + '</dd></div>' +
-        '<div><dt>خەرجی</dt><dd class="r">' + fmt(out) + '</dd></div>' +
-        '<div><dt>پوخت</dt><dd class="' + (net < 0 ? 'r' : 'g') + '">' + fmt(net) + '</dd></div></dl></div>';
+    $('#dstrip').innerHTML = strip;
+    if (mScroll && !$('[data-view="money"]').classList.contains('vhide')) {
+      mScroll = false;
+      var on = $('#dstrip .on'); if (on && on.scrollIntoView) on.scrollIntoView({ inline: 'center', block: 'nearest' });
     }
-    $('#mrep').innerHTML = cards;
-    var xs = expenses.slice().sort(function (a, b) { return b.t - a.t; }).slice(0, 30);
-    $('#xlist').innerHTML = xs.length ? xs.map(function (x) {
-      return '<div class="xi"><div><b>' + esc(x.n) + '</b><small>' + esc(x.d) + '</small></div><span>' + fmt(x.a) + ' د.ع</span><button type="button" data-x="' + x.t + '" aria-label="ژێبرن">✕</button></div>';
-    }).join('') : '<p class="muted-p">هێشتا چ خەرجی نەهاتینە تۆمارکرن.</p>';
+
+    /* adding is only possible today */
+    $('#mAdd').hidden = !isToday;
+    $('#mLock').hidden = isToday;
+    $('#qKind').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.k === mKind); });
+    $('#qT').placeholder = mKind === 'in' ? 'داهات چ بوو؟ (ئێک ڕۆژ، ئاو، پرۆتین…)' : 'خەرجی چ بوو؟ (کارەبا، کرێ، ئامێر…)';
+    $('#qBtn').textContent = mKind === 'in' ? '+ داهات' : '+ خەرجی';
+    $('#qBtn').className = 'btn-add' + (mKind === 'in' ? '' : ' out');
+
+    /* the receipt: every line of the day */
+    var lines = dm.L.map(function (r) {
+      var e = r.e, member = r.k === 'in' && e.i, sub = r.k === 'out' ? 'خەرجی' : (member ? 'پارەدانا ئەندامی' : 'داهاتێ دەستی');
+      var inner = '<i class="ri ' + r.k + '">' + (r.k === 'in' ? ICON_IN : ICON_OUT) + '</i>' +
+        '<span class="tt"><b>' + esc(e.n || (r.k === 'in' ? 'داهات' : 'خەرجی')) + '</b><small>' + sub + (e.h ? ' · <span dir="ltr">' + esc(e.h) + '</span>' : '') + '</small></span>' +
+        '<span class="am ' + r.k + '" dir="ltr">' + (r.k === 'in' ? '+' : '-') + fmt(e.a) + '</span>';
+      return isToday
+        ? '<button type="button" class="re" data-e="' + r.k + '" data-t="' + e.t + '">' + inner + '</button>'
+        : '<div class="re">' + inner + '</div>';
+    }).join('');
+    $('#mList').innerHTML = '<div class="rc"><div class="rc-h"><b>تۆمارێن ڕۆژێ</b><span>' + dm.L.length + '</span></div>' +
+      (lines || '<p class="rc-e">' + (isToday ? 'هێشتا چ تۆمار نینە. پارەدانا ئەندامەکی یان داهات/خەرجیەکێ زێدە بکە.' : 'د ڤی ڕۆژی دا چ تۆمار نەبوون.') + '</p>') + '</div>';
+
+    /* the month */
+    var days = key === curKey ? Number(today.slice(8)) : dim;
+    $('#mSum').innerHTML = '<h3>کورتکرنا ' + MONTHS[mo] + '</h3><dl>' +
+      '<div><dt>داهات</dt><dd class="g" dir="ltr">' + fmt(mInc) + '</dd></div>' +
+      '<div><dt>خەرجی</dt><dd class="r" dir="ltr">' + fmt(mOut) + '</dd></div>' +
+      '<div><dt>پوخت</dt><dd class="' + (mInc - mOut < 0 ? 'r' : 'g') + '" dir="ltr">' + sgn(mInc - mOut) + '</dd></div>' +
+      '<div><dt>ناڤنجی ڕۆژانە</dt><dd dir="ltr">' + fmt(Math.round(mInc / Math.max(1, days))) + '</dd></div>' +
+      '<div><dt>باشترین ڕۆژ</dt><dd>' + (bestD ? bestD + ' ' + MONTHS[mo] + ' <small dir="ltr">' + fmt(bestA) + '</small>' : '-') + '</dd></div>' +
+      '<div><dt>ژمارا پارەدانان</dt><dd dir="ltr">' + cnt + '</dd></div></dl>';
+
+    var curInc = 0; pays.forEach(function (p) { if (String(p.d).slice(0, 7) === curKey) curInc += p.a; });
+    $('#sSum').innerHTML = fmt(curInc) + '<em>د.ع</em>';
+  }
+
+  function gotoMonth(delta) {
+    var day = sel(), y = Number(day.slice(0, 4)), mo = Number(day.slice(5, 7)) - 1 + delta;
+    var first = new Date(y, mo, 1), t = todayISO();
+    if (toISO(first).slice(0, 7) > t.slice(0, 7)) return;
+    var lastD = new Date(first.getFullYear(), first.getMonth() + 1, 0), iso = toISO(lastD);
+    mDay = iso >= t ? null : iso; mScroll = true; renderMoney();
+  }
+
+  /* edit a line of TODAY only */
+  function findEnt(k, t) { var arr = k === 'in' ? pays : expenses; var i = arr.findIndex(function (x) { return String(x.t) === String(t); }); return i < 0 ? null : { arr: arr, i: i, e: arr[i] }; }
+  function openEntry(k, t) {
+    var f = findEnt(k, t); if (!f) return;
+    if (f.e.d !== todayISO()) { toast('ئەڤ ڕۆژە داخراوە.', true); renderMoney(); return; }
+    editEnt = { k: k, t: f.e.t }; eConfirm = false;
+    var member = k === 'in' && f.e.i;
+    $('#eT').value = f.e.n || ''; $('#eT').disabled = !!member;
+    $('#eA').value = f.e.a;
+    $('#eInfo').textContent = (k === 'out' ? 'خەرجی' : (member ? 'پارەدانا ئەندامی' : 'داهاتێ دەستی')) + (f.e.h ? ' · ' + f.e.h : '');
+    $('#eDel').textContent = 'ژێبرنا ئەڤ تۆمارێ'; $('#eDel').classList.remove('sure');
+    $('#eErr').textContent = '';
+    $('#veil7').hidden = false; document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('#eA').focus(); }, 50);
+  }
+  function closeEntry() { $('#veil7').hidden = true; editEnt = null; eConfirm = false; if ($('#veil6').hidden && $('#veil').hidden && $('#veil5').hidden) document.body.style.overflow = ''; }
+  function saveEntry(ev) {
+    ev.preventDefault();
+    var f = editEnt && findEnt(editEnt.k, editEnt.t); if (!f) { closeEntry(); return; }
+    if (f.e.d !== todayISO()) { closeEntry(); renderMoney(); return; }
+    var a = Number($('#eA').value), n = $('#eT').value.trim();
+    if (!(a > 0)) { $('#eErr').textContent = 'نرخەکێ دروست بنڤیسە (ژ سفرێ مەزنتر).'; $('#eA').focus(); return; }
+    if (!f.e.i && !n) { $('#eErr').textContent = 'ناڤێ تۆمارێ بنڤیسە.'; $('#eT').focus(); return; }
+    var was = f.e.a;
+    f.e.a = a; if (!f.e.i) f.e.n = n;
+    jset(editEnt.k === 'in' ? LSP : LSX, editEnt.k === 'in' ? pays : expenses);
+    logEv('hot', 'تۆمار هاتە گوهۆڕین: ' + (f.e.n || '') + ' (' + fmt(was) + ' بوو ' + fmt(a) + ')');
+    closeEntry(); renderMoney(); schedulePublish(); toast('گوهۆڕین هاتە پاشەکەفتکرن');
+  }
+  function delEntry() {
+    var f = editEnt && findEnt(editEnt.k, editEnt.t); if (!f) { closeEntry(); return; }
+    if (f.e.d !== todayISO()) { closeEntry(); renderMoney(); return; }
+    var memberPay = editEnt.k === 'in' && f.e.i;
+    if (!eConfirm) {
+      eConfirm = true; $('#eDel').classList.add('sure');
+      $('#eDel').textContent = memberPay ? 'پشت ڕاستی؟ ئەندام ژی دێ ببیتە «پارە نەدایە»' : 'پشت ڕاستی؟ بەلێ ژێببە';
+      return;
+    }
+    f.arr.splice(f.i, 1);
+    jset(editEnt.k === 'in' ? LSP : LSX, f.arr);
+    if (memberPay) {
+      var m = find(f.e.i);
+      if (m && m.paid && m.paidAt === todayISO()) { save(Object.assign({}, m, { paid: false, paidAt: null })); }
+    }
+    logEv('warn', 'تۆمار هاتە ژێبرن: ' + (f.e.n || '') + ' (' + fmt(f.e.a) + ' دینار)');
+    closeEntry(); renderMoney(); schedulePublish(); toast('هاتە ژێبرن');
   }
 
   $('#tabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setTab(b.dataset.t); });
-  $('#xform').addEventListener('submit', function (e) {
+  $('#mPrev').addEventListener('click', function () { gotoMonth(-1); });
+  $('#mNext').addEventListener('click', function () { gotoMonth(1); });
+  $('#dstrip').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-d]'); if (!b) return;
+    mDay = b.dataset.d === todayISO() ? null : b.dataset.d; mScroll = true; renderMoney();
+  });
+  $('#qKind').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mKind = b.dataset.k; renderMoney(); });
+  $('#qChips').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-add]'); if (!b) return;
+    $('#qA').value = (Number($('#qA').value) || 0) + Number(b.dataset.add);
+  });
+  $('#mAdd').addEventListener('submit', function (e) {
     e.preventDefault();
-    var n = $('#xT').value.trim(), a = Number($('#xA').value);
-    if (!n || !(a > 0)) { toast('ناڤ و نرخێ خەرجیێ بنڤیسە.', true); return; }
-    expenses.unshift({ t: Date.now(), d: todayISO(), n: n, a: a }); jset(LSX, expenses);
-    logEv('warn', 'خەرجی هاتە تۆمارکرن: ' + n + ' (' + fmt(a) + ' دینار)');
-    this.reset(); renderMoney(); schedulePublish(); toast('خەرجی هاتە تۆمارکرن');
+    if (sel() !== todayISO()) { toast('ئەڤ ڕۆژە داخراوە.', true); return; }
+    var n = $('#qT').value.trim(), a = Number($('#qA').value);
+    if (!n || !(a > 0)) { toast('ناڤ و نرخەکێ دروست بنڤیسە.', true); return; }
+    moneyInit();
+    if (mKind === 'in') { pays.push({ t: newT(), d: todayISO(), h: nowHM(), a: a, n: n, m: 1 }); jset(LSP, pays); logEv('ok', 'داهاتێ دەستی هاتە تۆمارکرن: ' + n + ' (' + fmt(a) + ' دینار)'); }
+    else { expenses.unshift({ t: newT(), d: todayISO(), h: nowHM(), n: n, a: a }); jset(LSX, expenses); logEv('warn', 'خەرجی هاتە تۆمارکرن: ' + n + ' (' + fmt(a) + ' دینار)'); }
+    this.reset(); renderMoney(); schedulePublish(); toast(mKind === 'in' ? 'داهات هاتە تۆمارکرن' : 'خەرجی هاتە تۆمارکرن');
   });
-  $('#xlist').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-x]'); if (!b) return;
-    expenses = expenses.filter(function (x) { return String(x.t) !== b.dataset.x; }); jset(LSX, expenses); renderMoney(); schedulePublish();
-  });
+  $('#mList').addEventListener('click', function (e) { var b = e.target.closest('[data-e]'); if (b) openEntry(b.dataset.e, b.dataset.t); });
+  $('#eform').addEventListener('submit', saveEntry);
+  $('#eDel').addEventListener('click', delEntry);
+  $('#eCancel').addEventListener('click', closeEntry);
+  $('#veil7').addEventListener('click', function (e) { if (e.target === this) closeEntry(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && cfg) renderMoney(); });   /* a new day started while the phone was asleep */
 
   /* ---------- start ---------- */
   /* nothing from the panel is loaded or drawn here: only the gate is visible until the token is verified */
