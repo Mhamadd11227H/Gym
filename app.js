@@ -10,7 +10,7 @@
   var PLAN = { 1: '1 هەیڤ', 3: '3 هەیڤ', 6: '6 هەیڤ', 12: 'ساڵەک' };
   var members = [], cfg = null, cache = {};
   var q = '', filter = 'all', editingId = null, payVal = 0, confirmId = null;
-  var formCode = '';
+  var formCode = '', formPhoto = '', detailId = null;
   var LSS = 'forge_gym_status', LSL = 'forge_gym_log_v1', LSLR = 'forge_gym_log_read';
   var gstat = jget(LSS, { open: true, msg: '', t: 0 }), stAsk = null, stSync = 'none', log = jget(LSL, []);
   var pubState = 'none', pubTimer = null, pubBusy = false, pubAgain = false, toastT = null, idleT = null, bkPass = null, pendingOverwrite = false;
@@ -352,7 +352,8 @@
       if (filter === 'soon' && (info(m).expired || info(m).days > 5)) return false;
       if (!term) return true;
       return String(m.name || '').toLowerCase().indexOf(term) >= 0 ||
-        String(m.phone || '').replace(/\s/g, '').indexOf(term.replace(/\s/g, '')) >= 0;
+        String(m.phone || '').replace(/\s/g, '').indexOf(term.replace(/\s/g, '')) >= 0 ||
+        [m.snap, m.insta, m.tiktok].some(function (x) { return String(x || '').toLowerCase().indexOf(term) >= 0; });
     });
 
     var list = $('#list');
@@ -364,49 +365,98 @@
         : '<h3>د ڤێ بەشێ دا چ کەس نینن</h3><p>فلتەرەکێ دی هەلبژێرە.</p>';
       list.innerHTML = '<div class="empty">' + hint + '</div>';
     } else {
-      list.innerHTML = rows.map(card).join('');
+      list.innerHTML = rows.map(row).join('');
     }
     $('#qClear').hidden = !q;
-    backupBar(); renderStatus(); renderAttn(); renderLogBadge(); renderToday(); renderMoney();
+    backupBar(); renderDetail(); renderStatus(); renderAttn(); renderLogBadge(); renderToday(); renderMoney();
   }
 
-  function card(m) {
+  /* دۆخ: سەوز = پارە دایە، سور = پارە نەدایە، زەرد = کات ب دوماهی هاتی و پارە نەدایە */
+  function state(m) {
     var inf = info(m);
-    var tags = '';
-    if (inf.expired) tags += '<span class="tag warn">ب دوماهی هاتیە ' + Math.abs(inf.days) + ' ڕۆژ بەری ئێستا</span>';
-    else if (inf.days <= 5) tags += '<span class="tag warn">' + (inf.days === 0 ? 'ئەڤرو ب دوماهی دهێت' : 'ماینە ' + inf.days + ' ڕۆژ') + '</span>';
-    else tags += '<span class="tag">ماینە ' + inf.days + ' ڕۆژ</span>';
-    if (m.lastVisit) tags += '<span class="tag">' + (m.lastVisit === todayISO() ? 'ئەڤرو هاتیە' : 'دوماهیک هاتن ' + esc(m.lastVisit)) + '</span>';
+    if (!m.paid && inf.expired) return { c: 'warn', t: 'کات ب دوماهی هاتیە و پارە نەدایە', inf: inf };
+    if (!m.paid) return { c: 'bad', t: 'پارە نەدایە', inf: inf };
+    return { c: 'ok', t: 'پارە دایە', inf: inf };
+  }
+  function avatar(m, big) {
+    var ini = esc(String(m.name || '?').trim().charAt(0) || '?');
+    return '<span class="av' + (big ? ' big' : '') + '">' + (okPhoto(m.photo) ? '<img alt="" src="' + esc(m.photo) + '">' : '<b>' + ini + '</b>') + '</span>';
+  }
+  function okPhoto(p) { return /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p || ''); }
+  function handle(v) {
+    var s = String(v || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '');
+    if (s.indexOf('/') >= 0) s = s.split('/').pop();
+    return s.replace(/^@+/, '').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 40);
+  }
+  function socials(m) {
+    var out = [];
+    if (m.snap) out.push('<a class="sc snap" target="_blank" rel="noopener" href="https://www.snapchat.com/add/' + encodeURIComponent(m.snap) + '"><i>S</i><span dir="ltr">' + esc(m.snap) + '</span></a>');
+    if (m.insta) out.push('<a class="sc insta" target="_blank" rel="noopener" href="https://www.instagram.com/' + encodeURIComponent(m.insta) + '"><i>I</i><span dir="ltr">' + esc(m.insta) + '</span></a>');
+    if (m.tiktok) out.push('<a class="sc tiktok" target="_blank" rel="noopener" href="https://www.tiktok.com/@' + encodeURIComponent(m.tiktok) + '"><i>T</i><span dir="ltr">' + esc(m.tiktok) + '</span></a>');
+    return out.join('');
+  }
+
+  /* لیستا سادە: تنێ وێنە و ناڤ. ناڤ ب ڕەنگێ دۆخی */
+  function row(m) {
+    var s = state(m);
+    return '<button type="button" class="mr s-' + s.c + '" data-act="open" data-id="' + esc(m.id) + '" aria-label="' + esc(m.name) + ': ' + s.t + '">' +
+      avatar(m) + '<span class="mn">' + esc(m.name) + '</span><i class="dotc" aria-hidden="true"></i></button>';
+  }
+
+  /* زانیاریێن تەمام: دهێنە ڤەکرن دەمێ کلیک ل سەر ناڤی دهێتە کرن */
+  function detailHtml(m) {
+    var s = state(m), inf = s.inf, id = esc(m.id);
+    var left = inf.expired ? 'ب دوماهی هاتیە ' + Math.abs(inf.days) + ' ڕۆژ بەری ئێستا' : (inf.days === 0 ? 'ئەڤرو ب دوماهی دهێت' : 'ماینە ' + inf.days + ' ڕۆژ');
     var days = normPlan(m.plan).filter(dayHas).length;
-    tags += '<span class="tag">' + (days ? 'بەرنامە: ' + days + ' ڕۆژ' : 'بێ بەرنامە') + '</span>';
-
-    var meta = '<span class="tag ' + (m.paid ? 'ok' : 'red') + '">' + (m.paid ? 'پارە دایە' : 'پارە نەدایە') + '</span>' +
-      '<span>' + esc(PLAN[m.months] || '1 هەیڤ') + '</span>' +
-      (m.phone ? '<span class="ph">' + esc(m.phone) + '</span>' : '') + tags;
-
+    var visit = m.lastVisit ? (m.lastVisit === todayISO() ? 'ئەڤرو' : esc(m.lastVisit)) : 'هێشتا نەهاتیە';
+    var soc = socials(m);
     var del = confirmId === m.id
-      ? '<span class="confirm">پشت ڕاستی؟ <button type="button" class="yes" data-act="del-yes" data-id="' + esc(m.id) + '">بەلێ، ژێببە</button><button type="button" class="no" data-act="del-no">نەخێر</button></span>'
-      : '<button type="button" class="del" data-act="del" data-id="' + esc(m.id) + '">ژێببە</button>';
-
-    return '<article class="m' + (m.paid ? ' paid' : '') + (inf.expired ? ' exp' : inf.days <= 5 ? ' soon' : '') + '">' +
-      '<div class="m-head"><div class="m-name">' + esc(m.name) + '</div><div class="m-amt"><b>' + fmt(m.amount) + '</b><small>دینار</small></div></div>' +
-      '<div class="m-meta">' + meta + '</div>' +
+      ? '<span class="confirm">پشت ڕاستی؟ <button type="button" class="yes" data-act="del-yes" data-id="' + id + '">بەلێ، ژێببە</button><button type="button" class="no" data-act="del-no">نەخێر</button></span>'
+      : '<button type="button" class="del" data-act="del" data-id="' + id + '">ژێببە</button>';
+    return '<div class="sheet det s-' + s.c + '" role="dialog" aria-modal="true" aria-label="' + esc(m.name) + '">' +
+      '<button type="button" class="det-x" data-act="close" aria-label="داخستن">✕</button>' +
+      '<div class="det-top">' + avatar(m, true) + '<h2>' + esc(m.name) + '</h2><span class="stp">' + s.t + '</span></div>' +
+      '<dl class="kv">' +
+        '<div><dt>نرخ</dt><dd dir="ltr">' + fmt(m.amount) + ' <small>دینار</small></dd></div>' +
+        '<div><dt>ماوە</dt><dd>' + esc(PLAN[m.months] || '1 هەیڤ') + '</dd></div>' +
+        '<div><dt>دەستپێک</dt><dd dir="ltr">' + esc(m.start || '') + '</dd></div>' +
+        '<div><dt>ب دوماهی دهێت</dt><dd dir="ltr">' + esc(inf.iso) + '</dd></div>' +
+        '<div class="wide ' + (inf.expired ? 'bad' : inf.days <= 5 ? 'warn' : '') + '"><dt>ماوەی مای</dt><dd>' + left + '</dd></div>' +
+        '<div><dt>دوماهیک هاتن</dt><dd>' + visit + '</dd></div>' +
+        '<div><dt>بەرنامە</dt><dd>' + (days ? days + ' ڕۆژ' : 'بێ بەرنامە') + '</dd></div>' +
+      '</dl>' +
+      '<div class="det-sec"><h3>پەیوەندی</h3>' +
+        (m.phone ? '<a class="tel" dir="ltr" href="tel:' + esc(String(m.phone).replace(/[^\d+]/g, '')) + '">' + esc(m.phone) + '</a>' : '') +
+        (soc ? '<div class="scs">' + soc + '</div>' : '') +
+        (!m.phone && !soc ? '<p class="muted-p">هێشتا ژمارە یان ئەکاونت نەهاتینە نڤیسین. ب «دەستکاری» زێدە بکە.</p>' : '') +
+      '</div>' +
       (m.note ? '<div class="note">' + esc(m.note) + '</div>' : '') +
       '<div class="seg" role="group" aria-label="دۆخێ پارەدانێ">' +
-        '<button type="button" class="no' + (m.paid ? '' : ' on') + '" data-act="unpaid" data-id="' + esc(m.id) + '">پارە نەدایە</button>' +
-        '<button type="button" class="yes' + (m.paid ? ' on' : '') + '" data-act="paid" data-id="' + esc(m.id) + '">پارە دایە</button>' +
+        '<button type="button" class="no' + (m.paid ? '' : ' on') + '" data-act="unpaid" data-id="' + id + '">پارە نەدایە</button>' +
+        '<button type="button" class="yes' + (m.paid ? ' on' : '') + '" data-act="paid" data-id="' + id + '">پارە دایە</button>' +
       '</div>' +
       '<div class="codeline"><span>کۆد</span><code dir="ltr">' + esc(m.code) + '</code>' +
-        '<button type="button" data-act="copy" data-id="' + esc(m.id) + '">کۆپی</button>' +
+        '<button type="button" data-act="copy" data-id="' + id + '">کۆپی</button>' +
         '<a href="' + esc(waLink(m)) + '" target="_blank" rel="noopener">ناردن ب WhatsApp</a></div>' +
       '<div class="acts">' +
-        '<button type="button" class="in" data-act="in" data-id="' + esc(m.id) + '">چووە ژوور</button>' +
-        (inf.expired ? '<button type="button" data-act="renew" data-id="' + esc(m.id) + '">نویکرن</button>' : '') +
-        '<button type="button" class="pg" data-act="prog" data-id="' + esc(m.id) + '">بەرنامەیا ڕاهێنانێ</button>' +
-        '<button type="button" data-act="edit" data-id="' + esc(m.id) + '">دەستکاری</button>' +
+        '<button type="button" class="in" data-act="in" data-id="' + id + '">چووە ژوور</button>' +
+        (inf.expired ? '<button type="button" data-act="renew" data-id="' + id + '">نویکرن</button>' : '') +
+        '<button type="button" class="pg" data-act="prog" data-id="' + id + '">بەرنامەیا ڕاهێنانێ</button>' +
+        '<button type="button" data-act="edit" data-id="' + id + '">دەستکاری</button>' +
         del +
-      '</div></article>';
+      '</div></div>';
   }
+  function renderDetail() {
+    var v = $('#veil6'); if (!v) return;
+    var m = detailId && find(detailId);
+    if (!m) { v.hidden = true; detailId = null; return; }
+    var keep = v.querySelector('.sheet'), top = keep ? keep.scrollTop : 0;
+    $('#detail').innerHTML = detailHtml(m);
+    v.hidden = false;
+    var sh = v.querySelector('.sheet'); if (sh) sh.scrollTop = top;
+  }
+  function openDetail(id) { detailId = id; confirmId = null; document.body.style.overflow = 'hidden'; renderDetail(); }
+  function closeDetail() { detailId = null; confirmId = null; $('#veil6').hidden = true; document.body.style.overflow = ''; }
 
   /* ---------- actions ---------- */
   function setPaid(id, val) {
@@ -451,6 +501,32 @@
     payVal = v;
     document.querySelectorAll('#fPay button').forEach(function (b) { b.classList.toggle('on', Number(b.dataset.v) === v); });
   }
+  /* وێنەیێ ئەندامی: چوارگۆشە، بچووک (نێزیک 8 KB)، تنێ د ڤی ئامێری و د کۆپیا کۆدکری دا دمینیت. ناچیتە سەر portal.json */
+  async function squarePhoto(file, size) {
+    var bmp;
+    try { bmp = await createImageBitmap(file); }
+    catch (e) {
+      bmp = await new Promise(function (ok, no) {
+        var im = new Image(), u = URL.createObjectURL(file);
+        im.onload = function () { URL.revokeObjectURL(u); ok(im); };
+        im.onerror = function () { no(new Error('img')); };
+        im.src = u;
+      });
+    }
+    var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
+    if (!w || !h) throw new Error('img');
+    var s = Math.min(w, h), c = document.createElement('canvas'); c.width = c.height = size;
+    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, size, size);
+    x.drawImage(bmp, (w - s) / 2, (h - s) / 2, s, s, 0, 0, size, size);
+    if (bmp.close) bmp.close();
+    return c.toDataURL('image/jpeg', 0.74);
+  }
+  function setFormPhoto() {
+    var b = $('#fPhotoBtn');
+    b.classList.toggle('has', !!formPhoto);
+    b.innerHTML = formPhoto ? '<img alt="" src="' + esc(formPhoto) + '">' : '<span>+</span>';
+    $('#fPhotoDel').hidden = !formPhoto;
+  }
   function openForm(id, presetName) {
     editingId = id || null;
     var m = id ? find(id) : null;
@@ -461,6 +537,10 @@
     $('#fPhone').value = m ? (m.phone || '') : '';
     $('#fStart').value = m ? (m.start || todayISO()) : todayISO();
     $('#fNote').value = m ? (m.note || '') : '';
+    $('#fSnap').value = m ? (m.snap || '') : '';
+    $('#fInsta').value = m ? (m.insta || '') : '';
+    $('#fTok').value = m ? (m.tiktok || '') : '';
+    formPhoto = m && okPhoto(m.photo) ? m.photo : ''; setFormPhoto();
     formCode = m ? m.code : freshCode();
     $('#fCode').value = formCode;
     showCodeHint();
@@ -491,6 +571,8 @@
       phone: $('#fPhone').value.trim(),
       start: $('#fStart').value || todayISO(),
       note: $('#fNote').value.trim(),
+      photo: formPhoto,
+      snap: handle($('#fSnap').value), insta: handle($('#fInsta').value), tiktok: handle($('#fTok').value),
       code: codeRaw,
       plan: old ? (old.plan || []) : blankWeek(),   /* a new member starts with the six weekdays ready */
       paid: paid,
@@ -694,6 +776,8 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(m.start || '')) m.start = todayISO();
       if (!m.code || codeTaken(m.code, m.id)) m.code = freshCode();
       if (!Array.isArray(m.plan)) m.plan = [];
+      if (!okPhoto(m.photo)) m.photo = '';
+      m.snap = handle(m.snap); m.insta = handle(m.insta); m.tiktok = handle(m.tiktok);
       var i = members.findIndex(function (x) { return x.id === m.id; });
       if (i < 0) members.push(m); else members[i] = m;
     });
@@ -913,10 +997,12 @@
     var b = e.target.closest('.chip'); if (!b) return;
     filter = b.dataset.f; render();
   });
-  $('#list').addEventListener('click', function (e) {
+  var onAct = function (e) {
     var b = e.target.closest('[data-act]'); if (!b) return;
     var a = b.dataset.act, id = b.dataset.id;
-    if (a === 'add') openForm();
+    if (a === 'open') openDetail(id);
+    else if (a === 'close') closeDetail();
+    else if (a === 'add') openForm();
     else if (a === 'add-q') openForm(null, q.trim());
     else if (a === 'paid') setPaid(id, true);
     else if (a === 'unpaid') setPaid(id, false);
@@ -927,7 +1013,17 @@
     else if (a === 'prog') openProg(id);
     else if (a === 'del') { confirmId = id; render(); }
     else if (a === 'del-no') { confirmId = null; render(); }
-    else if (a === 'del-yes') { confirmId = null; logEv('bad', 'ئەندام هاتە ژێبرن: ' + ((find(id) || {}).name || '')); removeMember(id); toast('هاتە ژێبرن'); }
+    else if (a === 'del-yes') { confirmId = null; logEv('bad', 'ئەندام هاتە ژێبرن: ' + ((find(id) || {}).name || '')); closeDetail(); removeMember(id); toast('هاتە ژێبرن'); }
+  };
+  $('#list').addEventListener('click', onAct);
+  $('#detail').addEventListener('click', onAct);
+  $('#veil6').addEventListener('click', function (e) { if (e.target === this) closeDetail(); });
+  $('#fPhotoBtn').addEventListener('click', function () { $('#fPhotoFile').click(); });
+  $('#fPhotoDel').addEventListener('click', function () { formPhoto = ''; setFormPhoto(); });
+  $('#fPhotoFile').addEventListener('change', async function (e) {
+    var f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { formPhoto = await squarePhoto(f, 220); setFormPhoto(); $('#fErr').textContent = ''; }
+    catch (er) { $('#fErr').textContent = 'نەشێین وێنەی بخوینین.'; }
   });
   $('#fPay').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setPay(Number(b.dataset.v)); });
   $('#fNewCode').addEventListener('click', function () { formCode = freshCode(); $('#fCode').value = formCode; showCodeHint(); });
@@ -983,7 +1079,9 @@
   $('#veil').addEventListener('click', function (e) { if (e.target === this) closeForm(); });
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
-    if (!$('#veil').hidden) closeForm();
+    if (!$('#veil').hidden) { closeForm(); return; }
+    if (!$('#veil5').hidden) { closeProg(); return; }
+    if (!$('#veil6').hidden) closeDetail();
     if (!$('#veil3').hidden) closeCloud();
     if (!$('#veil4').hidden) closeLog();
     if (!$('#veil5').hidden) closeProg();

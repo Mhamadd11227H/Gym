@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Noto+Kufi+Arabic:wght@600;800&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=4">
-<link rel="stylesheet" href="admin.css?v=4">
+<link rel="stylesheet" href="admin.css?v=5">
 </head>
 <body>
 <noscript><p style="padding:24px;text-align:center;color:#fff">JavaScript پێدڤییە بۆ ڤەکرنا ڤێ لاپەڕێ.</p></noscript>
@@ -107,10 +107,11 @@
       <button class="clear" id="qClear" type="button" aria-label="پاقژکرن" hidden>✕</button>
     </div>
     <div class="chips" id="chips"></div>
+    <div class="legend" aria-label="مانایا ڕەنگان"><span class="ok">پارە دایە</span><span class="bad">پارە نەدایە</span><span class="warn">کات ب دوماهی هاتی و پارە نەدایە</span></div>
   </section>
 
   <main data-view="members">
-    <div class="list" id="list"></div>
+    <div class="list rows" id="list"></div>
   </main>
 
   <section class="money" data-view="money" aria-label="پارە و خەرجی">
@@ -144,10 +145,18 @@
   <button type="button" data-t="more"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>زێدەتر</button>
 </nav>
 
+<!-- زانیاریێن ئەندامی: دهێت ڤەکرن دەمێ کلیک ل سەر ناڤی دهێتە کرن -->
+<div class="veil" id="veil6" hidden><div id="detail"></div></div>
+
 <!-- فۆرما ئەندامی -->
 <div class="veil" id="veil" hidden>
   <form class="sheet" id="form" role="dialog" aria-modal="true" aria-labelledby="fTitle" novalidate>
     <h2 id="fTitle">ئەندامێ نوی</h2>
+    <div class="photo-pick">
+      <button type="button" class="ph-btn" id="fPhotoBtn" aria-label="وێنەی ئەندامی هەلبژێرە"><span>+</span></button>
+      <div><b>وێنەی ئەندامی</b><small>نە پێدڤییە</small><button type="button" class="ph-del" id="fPhotoDel" hidden>لابردنا وێنەی</button></div>
+      <input type="file" id="fPhotoFile" accept="image/*" hidden>
+    </div>
     <label for="fName">ناڤ *</label>
     <input id="fName" autocomplete="off">
     <div class="two">
@@ -165,6 +174,12 @@
       <div><label for="fPhone">ژمارا مۆبایلێ</label><input id="fPhone" class="ltr" type="tel" inputmode="tel" autocomplete="off"></div>
       <div><label for="fStart">بەرواری دەستپێکرنێ</label><input id="fStart" class="ltr" type="date"></div>
     </div>
+    <div class="three">
+      <div><label for="fSnap">Snapchat</label><input id="fSnap" class="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="username"></div>
+      <div><label for="fInsta">Instagram</label><input id="fInsta" class="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="username"></div>
+      <div><label for="fTok">TikTok</label><input id="fTok" class="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="username"></div>
+    </div>
+    <small class="sub">ناڤێ بەکارهێنەری بنڤیسە (بێ @) یان لینکێ پرۆفایلی دانە.</small>
     <label for="fNote">تێبینی (تنێ بۆ تە)</label>
     <textarea id="fNote"></textarea>
 
@@ -264,6 +279,6 @@
 })();
 </script>
 <script src="crypto.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
