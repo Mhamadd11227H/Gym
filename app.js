@@ -316,12 +316,18 @@
     return 'https://wa.me/' + p + '?text=' + encodeURIComponent(text);
   }
 
+  function remindLink(m, inf) {
+    var p = String(m.phone || '').replace(/\D/g, '').replace(/^00/, '');
+    if (p && p.indexOf('964') !== 0) p = '964' + p.replace(/^0/, '');
+    var t = 'سلاڤ ' + m.name + '،\nئەندامەتیا تە ل Forge Gym ' + (inf.expired ? 'ب دوماهی هاتیە.' : (inf.days === 0 ? 'ئەڤرو ب دوماهی دهێت.' : 'تنێ ' + inf.days + ' ڕۆژ ماینە.')) + '\nبۆ نویکرنێ ڕا بگەهینە مە. سوپاس 🙏';
+    return 'https://wa.me/' + p + '?text=' + encodeURIComponent(t);
+  }
   function backupBar() {
     var bar = $('#bkbar');
     if (!members.length) { bar.hidden = true; return; }
     var last = lastBackupDate();
     var age = last ? dayDiff(parseISO(last), parseISO(todayISO())) : null;
-    if (last && age < 7) { bar.hidden = true; return; }
+    if (last && age < 3) { bar.hidden = true; return; }
     $('#bkText').textContent = last
       ? 'ئاگەهداری: ' + age + ' ڕۆژ ژ دوماهیک کۆپیکرنا تۆمارا بوری ینە. داتا تنێ د ڤی ئامێری دایە.'
       : 'ئاگەهداری: هێشتا کۆپیەکا تۆمارا نەهاتیە ڤەگرتن. ئەگەر داتایا ڤی براوزەری بهێتە ژێبرن، هەمی ئەندام دێ ژ دەست چن.';
@@ -409,6 +415,9 @@
     var days = normPlan(m.plan).filter(dayHas).length;
     var visit = m.lastVisit ? (m.lastVisit === todayISO() ? 'ئەڤرو' : esc(m.lastVisit)) : 'هێشتا نەهاتیە';
     var soc = socials(m);
+    moneyInit();
+    var vm = (m.visits || []).filter(function (d) { return d.slice(0, 7) === todayISO().slice(0, 7); }).length;
+    var hist = pays.filter(function (p) { return p.i === m.id; }).sort(function (a, b) { return b.d.localeCompare(a.d) || b.t - a.t; }).slice(0, 6);
     var del = confirmId === m.id
       ? '<span class="confirm">پشت ڕاستی؟ <button type="button" class="yes" data-act="del-yes" data-id="' + id + '">بەلێ، ژێببە</button><button type="button" class="no" data-act="del-no">نەخێر</button></span>'
       : '<button type="button" class="del" data-act="del" data-id="' + id + '">ژێببە</button>';
@@ -422,6 +431,7 @@
         '<div><dt>ب دوماهی دهێت</dt><dd dir="ltr">' + esc(inf.iso) + '</dd></div>' +
         '<div class="wide ' + (inf.expired ? 'bad' : inf.days <= 5 ? 'warn' : '') + '"><dt>ماوەی مای</dt><dd>' + left + '</dd></div>' +
         '<div><dt>دوماهیک هاتن</dt><dd>' + visit + '</dd></div>' +
+        '<div><dt>هاتن ئەڤ هەیڤێ</dt><dd dir="ltr">' + vm + '</dd></div>' +
         '<div><dt>بەرنامە</dt><dd>' + (days ? days + ' ڕۆژ' : 'بێ بەرنامە') + '</dd></div>' +
       '</dl>' +
       '<div class="det-sec"><h3>پەیوەندی</h3>' +
@@ -429,6 +439,7 @@
         (soc ? '<div class="scs">' + soc + '</div>' : '') +
         (!m.phone && !soc ? '<p class="muted-p">هێشتا ژمارە یان ئەکاونت نەهاتینە نڤیسین. ب «دەستکاری» زێدە بکە.</p>' : '') +
       '</div>' +
+      '<div class="det-sec"><h3>دیرۆکا پارەدانان</h3>' + (hist.length ? hist.map(function (p) { return '<div class="hl"><span dir="ltr">' + esc(p.d) + '</span><b dir="ltr">' + fmt(p.a) + '</b></div>'; }).join('') : '<p class="muted-p">هێشتا چ پارەدان نەهاتیە تۆمارکرن.</p>') + '</div>' +
       (m.note ? '<div class="note">' + esc(m.note) + '</div>' : '') +
       '<div class="seg" role="group" aria-label="دۆخێ پارەدانێ">' +
         '<button type="button" class="no' + (m.paid ? '' : ' on') + '" data-act="unpaid" data-id="' + id + '">پارە نەدایە</button>' +
@@ -439,6 +450,7 @@
         '<a href="' + esc(waLink(m)) + '" target="_blank" rel="noopener">ناردن ب WhatsApp</a></div>' +
       '<div class="acts">' +
         '<button type="button" class="in" data-act="in" data-id="' + id + '">چووە ژوور</button>' +
+        ((inf.expired || inf.days <= 5) && m.phone ? '<a class="rem" target="_blank" rel="noopener" href="' + esc(remindLink(m, inf)) + '">بیرئینان ب WhatsApp</a>' : '') +
         (inf.expired ? '<button type="button" data-act="renew" data-id="' + id + '">نویکرن</button>' : '') +
         '<button type="button" class="pg" data-act="prog" data-id="' + id + '">بەرنامەیا ڕاهێنانێ</button>' +
         '<button type="button" data-act="edit" data-id="' + id + '">دەستکاری</button>' +
@@ -482,7 +494,7 @@
   function checkIn(id) {
     var m = find(id); if (!m) return;
     var inf = info(m);
-    var next = Object.assign({}, m, { lastVisit: todayISO(), updatedAt: Date.now() });
+    var next = Object.assign({}, m, { lastVisit: todayISO(), updatedAt: Date.now(), visits: (m.visits || []).filter(function (d) { return d !== todayISO(); }).concat(todayISO()).slice(-120) });
     var i = members.findIndex(function (x) { return x.id === id; });
     members[i] = next; persist(); render();
     if (!m.paid) { showRes('bad', m.name, 'پارە نەدایە. نەهێلە بچیتە ژوور.'); logEv('bad', m.name + ' هاتە ژوور، بەلێ پارە نەدایە'); }
@@ -1238,12 +1250,22 @@
       '<div><dt>پوخت</dt><dd class="' + (mInc - mOut < 0 ? 'r' : 'g') + '" dir="ltr">' + sgn(mInc - mOut) + '</dd></div>' +
       '<div><dt>ناڤنجی ڕۆژانە</dt><dd dir="ltr">' + fmt(Math.round(mInc / Math.max(1, days))) + '</dd></div>' +
       '<div><dt>باشترین ڕۆژ</dt><dd>' + (bestD ? bestD + ' ' + MONTHS[mo] + ' <small dir="ltr">' + fmt(bestA) + '</small>' : '-') + '</dd></div>' +
-      '<div><dt>ژمارا پارەدانان</dt><dd dir="ltr">' + cnt + '</dd></div></dl>';
+      '<div><dt>ژمارا پارەدانان</dt><dd dir="ltr">' + cnt + '</dd></div></dl><button type="button" class="dl" data-dl="' + key + '">دابەزاندنا ڕاپۆرتا ' + MONTHS[mo] + ' (Excel)</button>';
 
     var curInc = 0; pays.forEach(function (p) { if (String(p.d).slice(0, 7) === curKey) curInc += p.a; });
     $('#sSum').innerHTML = fmt(curInc) + '<em>د.ع</em>';
   }
 
+  function exportMonth(key) {
+    var q = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }, rows = [];
+    pays.forEach(function (p) { if (String(p.d).slice(0, 7) === key) rows.push([p.d, p.h || '', 'داهات', p.n, p.a]); });
+    expenses.forEach(function (x) { if (String(x.d).slice(0, 7) === key) rows.push([x.d, x.h || '', 'خەرجی', x.n, -x.a]); });
+    rows.sort(function (a, b) { return (a[0] + a[1]).localeCompare(b[0] + b[1]); });
+    var csv = '\ufeff' + [['ڕێکەفت', 'دەم', 'جۆر', 'ناڤ', 'نرخ']].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\r\n');
+    var url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), a = document.createElement('a');
+    a.href = url; a.download = 'forge-gym-' + key + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000); toast('ڕاپۆرت هاتە دابەزاندن');
+  }
   function gotoMonth(delta) {
     var day = sel(), y = Number(day.slice(0, 4)), mo = Number(day.slice(5, 7)) - 1 + delta;
     var first = new Date(y, mo, 1), t = todayISO();
@@ -1301,6 +1323,7 @@
   }
 
   $('#tabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setTab(b.dataset.t); });
+  $('#mSum').addEventListener('click', function (e) { var b = e.target.closest('[data-dl]'); if (b) exportMonth(b.dataset.dl); });
   $('#mPrev').addEventListener('click', function () { gotoMonth(-1); });
   $('#mNext').addEventListener('click', function () { gotoMonth(1); });
   $('#dstrip').addEventListener('click', function (e) {

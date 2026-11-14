@@ -233,3 +233,10 @@ button.re:active{opacity:.7}
 .e-del{display:block;width:100%;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;color:var(--bad);font-weight:700}
 .e-del.sure{background:var(--bad);border-color:var(--bad);color:#fff}
 .sheet input:disabled{opacity:.6}
+
+/* ===== v7 ===== */
+.hl{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.hl:last-child{border-bottom:0}.hl b{font-family:var(--font-display);color:var(--ok)}
+.acts .rem{color:#25d366;font-weight:700;padding:4px 12px;border:1px solid rgba(37,211,102,.5);border-radius:6px;background:rgba(37,211,102,.08)}
+.msum .dl{width:100%;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-weight:700}
+.msum .dl:active{border-color:var(--red)}
