@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Noto+Kufi+Arabic:wght@600;800&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="portal.css?v=4">
+<link rel="stylesheet" href="portal.css?v=5">
 </head>
 <body class="portal">
 <noscript><p style="padding:24px;text-align:center;color:#fff">JavaScript پێدڤییە بۆ ڤەکرنا ڤێ لاپەڕێ.</p></noscript>
@@ -40,9 +40,9 @@
 
   <!-- ڕووپەلێ ئەندامی -->
   <section id="me" hidden>
-    <h2 class="hello" id="hello"></h2>
-    <!-- دوو لاپەڕێن جودا: ئەندامەتی و خشتە -->
-    <div class="ptabs" id="ptabs" role="tablist"><button type="button" class="on" data-p="card">ئەندامەتی</button><button type="button" data-p="plan">خشتەیا ڕاهێنانێ</button></div>
+    <div class="who"><span class="pav" id="meAv" aria-hidden="true"></span><h2 class="hello" id="hello"></h2></div>
+    <!-- سێ لاپەڕێن جودا: ئەندامەتی، خشتە و کێش -->
+    <div class="ptabs" id="ptabs" role="tablist"><button type="button" class="on" data-p="card">ئەندامەتی</button><button type="button" data-p="plan">خشتەیا ڕاهێنانێ</button><button type="button" data-p="kg">کێشا من</button></div>
 
     <div data-pv="card">
     <div class="pcard" id="pcard">
@@ -60,6 +60,34 @@
     </div>
     </div>
 
+
+    <div data-pv="kg" hidden>
+    <h3 class="sec">کێشا من</h3>
+    <form class="kgform" id="kgForm" novalidate>
+      <label for="kgIn">کێشا تە یا ئەڤرو (کگم)</label>
+      <div class="kgrow">
+        <input id="kgIn" type="text" inputmode="decimal" autocomplete="off" placeholder="72.5" dir="ltr">
+        <button class="btn-add" id="kgBtn" type="submit">تۆمارکرن</button>
+      </div>
+      <div class="err" id="kgErr" role="alert"></div>
+    </form>
+    <div id="kgStats"></div>
+    <div id="kgChart"></div>
+    <details class="kgset" id="kgSetBox">
+      <summary>ئارمانج و درێژی</summary>
+      <form id="kgSet" novalidate>
+        <div class="kgrow2">
+          <div><label for="kgGoal">ئارمانجا کێشێ (کگم)</label><input id="kgGoal" type="text" inputmode="decimal" autocomplete="off" dir="ltr" placeholder="70"></div>
+          <div><label for="kgH">درێژیا تە (سم)</label><input id="kgH" type="text" inputmode="numeric" autocomplete="off" dir="ltr" placeholder="175"></div>
+        </div>
+        <button class="btn-add" type="submit">پاشەکەفت</button>
+      </form>
+    </details>
+    <h3 class="sec kgsec">تۆمارێن من</h3>
+    <div id="kgList"></div>
+    <p class="kgnote">ئەڤ تۆمارە تنێ ل سەر ڤی ئامێری دمینیت. ئەگەر داتایا براوزەری بهێتە ژێبرن، ئەڤ تۆمارە ژی دچیت.</p>
+    </div>
+
     <div data-pv="plan" hidden>
     <h3 class="sec">خشتەیا ڕاهێنانێ</h3>
     <div class="days" id="days"></div>
@@ -69,6 +97,6 @@
 
 <div class="lb" id="lb" hidden><img id="lbImg" alt=""></div>
 <script src="crypto.js?v=4"></script>
-<script src="member.js?v=4"></script>
+<script src="member.js?v=5"></script>
 </body>
 </html>

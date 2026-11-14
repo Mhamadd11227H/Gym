@@ -11,6 +11,7 @@
   var members = [], cfg = null, cache = {};
   var q = '', filter = 'all', editingId = null, payVal = 0, confirmId = null;
   var formCode = '', formPhoto = '', detailId = null;
+  var LSDI = 'forge_gym_img_pending', LSPH = 'forge_gym_photo_pub_v1', phCache = {};
   var LSS = 'forge_gym_status', LSL = 'forge_gym_log_v1', LSLR = 'forge_gym_log_read';
   var gstat = jget(LSS, { open: true, msg: '', t: 0 }), stAsk = null, stSync = 'none', log = jget(LSL, []);
   var pubState = 'none', pubTimer = null, pubBusy = false, pubAgain = false, toastT = null, idleT = null, bkPass = null, pendingOverwrite = false;
@@ -72,8 +73,10 @@
     persist(); render(); schedulePublish();
   }
   function removeMember(id) {
+    var gone = members.filter(function (x) { return x.id === id; });
     members = members.filter(function (x) { return x.id !== id; });
     persist(); render(); schedulePublish();
+    dropImgs(orphanImgs(gone));
   }
 
   function toast(t, bad) {
@@ -136,7 +139,8 @@
     $('#app').hidden = false;
     $('#gToken').value = '';
     $('#gErr').textContent = '';
-    load(); render(); purgeCheck(); setPub('idle'); armIdle(); loadStatus(); setTab(location.hash.slice(1));
+    load(); render(); purgeCheck(); setPub('idle'); armIdle(); loadStatus(); setTab(location.hash.slice(1)); flushImgs();
+    if (members.some(function (m) { return okPhoto(m.photo); }) && !jget(LSPH, 0)) { jset(LSPH, 1); schedulePublish(); }   /* جارەکێ: وێنەیێن هەبووی بۆ یاریزانان بهێنە بەلاڤکرن */
     if (members.length && jget(LSIT, 0) !== FG.ITER) schedulePublish();   /* one-time: publish with the stronger encryption */
   }
 
@@ -208,13 +212,27 @@
     pubTimer = setTimeout(publish, 1500);
   }
 
-  function portalData(m) {
-    return {
+  /* وێنەیێ یاریزانی دچیتە د ناڤ تۆمارا وی یا کۆدکری دا (portal.json)، نە وەک فایلەکێ جودا. دەمێ ئەندام دهێتە ژێبرن، تۆمار و وێنە پێکڤە دچن */
+  async function portalPhoto(p) {
+    if (!okPhoto(p)) return '';
+    if (p.length < 9000) return p;
+    if (phCache[p]) return phCache[p];
+    try {
+      var im = await new Promise(function (ok, no) { var i = new Image(); i.onload = function () { ok(i); }; i.onerror = no; i.src = p; });
+      var c = document.createElement('canvas'); c.width = c.height = 128;
+      c.getContext('2d').drawImage(im, 0, 0, 128, 128);
+      return (phCache[p] = c.toDataURL('image/jpeg', 0.72));
+    } catch (e) { return ''; }
+  }
+  function portalData(m, ph) {
+    var o = {
       n: m.name, s: m.start || todayISO(), e: info(m).iso, p: m.paid ? 1 : 0,
       w: normPlan(m.plan).filter(dayHas).map(function (d) {
         return { k: d.k, t: d.t, f: d.f || '', x: d.x || '', e: d.e.filter(function (z) { return z.n || z.g; }).map(function (z) { return { n: z.n, s: z.s, g: '' }; }) };
       })
     };
+    if (ph) o.ph = ph;
+    return o;
   }
 
   async function gh(path, opt) {
@@ -233,7 +251,7 @@
     try {
       var records = {}, keep = {};
       for (var i = 0; i < members.length; i++) {
-        var m = members[i], data = portalData(m);
+        var m = members[i], data = portalData(m, await portalPhoto(m.photo));
         var sig = FG.ITER + '|' + m.code + '|' + JSON.stringify(data);
         var c = cache[m.id];
         if (!c || c.sig !== sig) {
@@ -362,8 +380,48 @@
     jset(LSP, pays);
     log.forEach(function (e) { names.forEach(function (n) { if (n && String(e.x).indexOf(n) >= 0) e.x = String(e.x).split(n).join('ئەندامێ ژێبری'); }); });
     members = members.filter(function (m) { return !ids[m.id]; });
+    dropImgs(orphanImgs(list));
     persist(); logEv('bad', list.length + ' ئەندام ب دوماهی هاتینە و داتایا وان هاتە ژێبرن');
     render(); schedulePublish();
+  }
+  /* وێنەیێن ڕاهێنانێ یێن ئەندامێ ژێبری ژ GitHub ژی دهێنە ژێبرن.
+     وێنەیەک تنێ دهێتە ژێبرن ئەگەر چ ئەندامەکێ دی ب کار نەئینابیت. ئەگەر ژێبرن نەچوو، دێ جارەکا دی هێتە هەوڵدان */
+  function planImgs(m) {
+    var out = [];
+    normPlan(m.plan).forEach(function (d) { d.e.forEach(function (z) { if (z && okImg(z.g)) out.push(z.g); }); });
+    return out;
+  }
+  function orphanImgs(gone) {
+    var keep = {}, out = {};
+    members.forEach(function (m) { planImgs(m).forEach(function (g) { keep[g] = 1; }); });
+    if (prog && prog.draft) prog.draft.forEach(function (d) { (d.e || []).forEach(function (z) { if (z && okImg(z.g)) keep[z.g] = 1; }); });
+    gone.forEach(function (m) { planImgs(m).forEach(function (g) { if (!keep[g]) out[g] = 1; }); });
+    return Object.keys(out);
+  }
+  async function dropImgs(paths) {
+    if (!paths.length) return;
+    var pend = jget(LSDI, []) || [];
+    paths.forEach(function (g) { if (pend.indexOf(g) < 0) pend.push(g); delete imgPrev[g]; });
+    Object.keys(exLib).forEach(function (k) { if (paths.indexOf(exLib[k].g) >= 0) delete exLib[k]; });
+    jset(LSE, exLib); jset(LSDI, pend);
+    await flushImgs();
+  }
+  async function flushImgs() {
+    if (!cfg) return;
+    var pend = jget(LSDI, []) || [], left = [], n = 0, still = {};
+    members.forEach(function (m) { planImgs(m).forEach(function (g) { still[g] = 1; }); });
+    for (var i = 0; i < pend.length; i++) {
+      var g = pend[i];
+      if (still[g] || !okImg(g)) continue;
+      try {
+        var cur = await gh('contents/' + g + '?ref=' + encodeURIComponent(cfg.branch) + '&t=' + Date.now(), { allow404: true });
+        if (cur) await gh('contents/' + g, { method: 'DELETE', body: JSON.stringify({ message: 'Remove exercise image', sha: cur.sha, branch: cfg.branch }) });
+        n++;
+      } catch (e) { left.push(g); }
+    }
+    jset(LSDI, left);
+    if (n) logEv('hot', n + ' وێنە ژ GitHub هاتنە ژێبرن');
+    if (left.length) toast('هندەک وێنە ژ GitHub نەهاتنە ژێبرن. دێ جارەکا دی هێتە هەوڵدان.', true);
   }
   function purgeCheck() {
     var due = dueList();
@@ -567,7 +625,7 @@
     payVal = v;
     document.querySelectorAll('#fPay button').forEach(function (b) { b.classList.toggle('on', Number(b.dataset.v) === v); });
   }
-  /* وێنەیێ ئەندامی: چوارگۆشە، بچووک (نێزیک 8 KB)، تنێ د ڤی ئامێری و د کۆپیا کۆدکری دا دمینیت. ناچیتە سەر portal.json */
+  /* وێنەیێ ئەندامی: چوارگۆشە و بچووک (نێزیک 4 KB). ل سەر ڤی ئامێری دمینیت و د ناڤ تۆمارا کۆدکری یا ئەندامی دا (portal.json) دچیتە سەر GitHub، دا یاریزان ژی ببینیت. دەمێ ئەندام دهێتە ژێبرن، وێنە ژی دچیت */
   async function squarePhoto(file, size) {
     var bmp;
     try { bmp = await createImageBitmap(file); }
@@ -585,7 +643,7 @@
     var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, size, size);
     x.drawImage(bmp, (w - s) / 2, (h - s) / 2, s, s, 0, 0, size, size);
     if (bmp.close) bmp.close();
-    return c.toDataURL('image/jpeg', 0.74);
+    return c.toDataURL('image/jpeg', 0.72);
   }
   function setFormPhoto() {
     var b = $('#fPhotoBtn');
@@ -1088,7 +1146,7 @@
   $('#fPhotoDel').addEventListener('click', function () { formPhoto = ''; setFormPhoto(); });
   $('#fPhotoFile').addEventListener('change', async function (e) {
     var f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    try { formPhoto = await squarePhoto(f, 220); setFormPhoto(); $('#fErr').textContent = ''; }
+    try { formPhoto = await squarePhoto(f, 128); setFormPhoto(); $('#fErr').textContent = ''; }
     catch (er) { $('#fErr').textContent = 'نەشێین وێنەی بخوینین.'; }
   });
   $('#fPay').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setPay(Number(b.dataset.v)); });
