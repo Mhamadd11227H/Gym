@@ -56,7 +56,7 @@
     var card = $('#pcard');
     card.className = 'pcard' + (expired ? ' bad' : soon ? ' soon' : '');
     countUp($('#pcDays'), expired ? Math.abs(left) : left);
-    $('#pcLabel').textContent = expired ? 'ڕۆژ بەری ئێستا ب دوماهی هاتیە' : (left === 0 ? 'ئەڤرو ب دوماهی دهێت' : 'ڕۆژ ماینە');
+    $('#pcLabel').textContent = expired ? 'ڕۆژ بەری نوکە ب دوماهی هاتیە' : (left === 0 ? 'ئەڤرو ب دوماهی دهێت' : 'ڕۆژ ماینە');
     var pct = (expired ? 0 : Math.min(100, Math.round(left / total * 100))) + '%';
     $('#pcBar').style.width = '0';
     requestAnimationFrame(function () { requestAnimationFrame(function () { $('#pcBar').style.width = pct; }); });
@@ -72,7 +72,7 @@
 
     var warn = $('#pcWarn');
     if (expired) { warn.hidden = false; warn.textContent = 'ماوەیا ئەندامەتیا تە ب دوماهی هاتیە. بۆ نویکرنێ سەرەدانا قاعێ بکە.'; }
-    else if (soon) { warn.hidden = false; warn.textContent = 'ماوەیا ئەندامەتیا تە ب زوویی دێ ب دوماهی هێت. بۆ نویکرنێ سەرەدانا قاعێ بکە.'; }
+    else if (soon) { warn.hidden = false; warn.textContent = 'ماوەیا ئەندامەتیا تە ب زوی دێ ب دوماهی هێت. بۆ نویکرنێ سەرەدانا قاعێ بکە.'; }
     else warn.hidden = true;
 
     var plan = p.w || [], dow = (new Date().getDay() + 1) % 7;   /* Saturday = 0 ... Thursday = 5, Friday = 6 */
@@ -138,22 +138,22 @@
     showLogin();
   });
 
-  /* دوو بەش: ئەندامەتی و خشتەیا ڕاهێنانێ، هەر ئێک لاپەڕەکا جیایە */
+  /* دوو بەش: ئەندامەتی و خشتەیا ڕاهێنانێ، هەر ئێک لاپەڕەکا جودایە */
   function setPV(v) {
     document.querySelectorAll('[data-pv]').forEach(function (el) { el.hidden = el.dataset.pv !== v; });
     document.querySelectorAll('#ptabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.p === v); });
   }
   $('#ptabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setPV(b.dataset.p); });
 
-  /* دۆخێ قاعێ (کراوە / گرتی) ژ status.json دهێت، خودان ژ پانێلی دگوهۆڕیت.
-     پێشتر ڤێ بەشێ چ کار نەدکر چنکو چ کۆدەکێ نەدخواند */
+  /* دۆخێ قاعێ (ڤەکری / گرتی) ژ status.json دهێت، خودان ژ پانێلی دگوهۆڕیت.
+     پێشتر ڤێ بەشێ چ کار نەدکر ژ بەر کو چ کۆدەکێ نەدخواند */
   (async function () {
     try {
       var r = await fetch('status.json?t=' + Date.now(), { cache: 'no-store' });
       if (!r.ok) return;
       var j = await r.json(), open = !!j.o, g = $('#gstat');
       g.className = 'gstat ' + (open ? 'open' : 'closed');
-      $('#gstatT').textContent = open ? 'قاعە ئێستا کراوەیە' : 'قاعە ئێستا گرتیە';
+      $('#gstatT').textContent = open ? 'قاعە نوکە ڤەکریە' : 'قاعە نوکە گرتیە';
       $('#gstatM').textContent = j.m || '';
       $('#gstatM').hidden = !j.m;
       g.hidden = false;

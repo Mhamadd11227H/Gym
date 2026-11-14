@@ -24,7 +24,7 @@
   </header>
   <section class="login">
     <h1>بەشێ خودانی</h1>
-    <p>بۆ ڤەکرنا ڤێ لاپەڕێ، تۆکنا GitHub بنڤیسە. هەتا تۆکن نەهێتە نڤیسین چ تشت ناهێتە نیشادان.</p>
+    <p>بۆ ڤەکرنا ڤێ لاپەڕێ، تۆکنا GitHub بنڤیسە. هەتا تۆکن نەهێتە نڤیسین چ تشت ناهێتە نیشاندان.</p>
     <form id="gateForm" novalidate>
       <label for="gToken">تۆکن (Token)</label>
       <input id="gToken" class="f" type="password" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -51,7 +51,7 @@
         <li>Personal access tokens ← Fine-grained tokens ← Generate new token</li>
         <li>Expiration: 1 year. د Repository access دا تنێ ڕیپۆیێ ڤی سایتی هەلبژێرە</li>
         <li>د Permissions ← Repository permissions ← <b>Contents</b> بکە <b>Read and write</b></li>
-        <li>Generate token، پاشی کۆپی بکە و لێرە دانە.</li>
+        <li>Generate token، پاشی کۆپی بکە و ل ڤێرێ دانە.</li>
       </ol>
     </details>
   </section>
@@ -74,17 +74,17 @@
     <span id="bkText"></span>
     <span class="bk-acts">
       <button type="button" id="bkCloud">پاراستن ل GitHub</button>
-      <button type="button" id="bkBtn">کۆپیکرن ئێستا</button>
+      <button type="button" id="bkBtn">کۆپیکرن نوکە</button>
     </span>
   </div>
 
   <section class="gs" data-view="home" id="gs" data-s="open" aria-label="دۆخێ قاعێ">
-    <div class="gs-h"><span class="dot"></span><div><small>یاریزان ئێستا دبینن، قاعە:</small><b id="gsTxt">کراوەیە</b></div></div>
+    <div class="gs-h"><span class="dot"></span><div><small>یاریزان نوکە دبینن، قاعە:</small><b id="gsTxt">ڤەکریە</b></div></div>
     <div class="seg" id="gsSeg" role="group" aria-label="دۆخێ قاعێ">
       <button type="button" class="no" data-st="closed">گرتیە</button>
-      <button type="button" class="yes on" data-st="open">کراوەیە</button>
+      <button type="button" class="yes on" data-st="open">ڤەکریە</button>
     </div>
-    <div class="gs-ask" id="gsAsk" hidden><span id="gsAskT"></span><div><button type="button" class="go" id="gsYes">بەلێ، بگوهۆڕە</button><button type="button" id="gsNo">نەخێر</button></div></div>
+    <div class="gs-ask" id="gsAsk" hidden><span id="gsAskT"></span><div><button type="button" class="go" id="gsYes">بەلێ، بگوهۆڕە</button><button type="button" id="gsNo">نە</button></div></div>
     <input class="gs-msg" id="gsMsg" maxlength="80" autocomplete="off" placeholder="پەیامەک بۆ یاریزانان (نە پێدڤییە)، بۆ نموونە: دەوام ژ 4 ی ئێڤارێ">
     <div class="gs-sync" id="gsSync"></div>
   </section>
@@ -122,7 +122,7 @@
       <div class="mnav">
         <button type="button" id="mPrev" aria-label="هەیڤا بوری"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <b id="mLabel"></b>
-        <button type="button" id="mNext" aria-label="هەیڤا دوایی"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button type="button" id="mNext" aria-label="هەیڤا ل دویڤ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
       </div>
     </div>
 
@@ -131,7 +131,7 @@
 
     <div class="mlock" id="mLock" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
-      <span>ئەڤ ڕۆژە چوو و داخراوە. نابێت تشتەکی تێدا بهێتە زێدەکرن، گوهۆڕین یان ژێبرن.</span>
+      <span>ئەڤ ڕۆژە چوو و هاتیە گرتن. ناهێت چ تشتەک تێدا بهێتە زێدەکرن، گوهۆڕین یان ژێبرن.</span>
     </div>
 
     <form class="qa" id="mAdd" novalidate>
@@ -143,7 +143,7 @@
         <input id="qT" autocomplete="off" aria-label="ناڤ">
         <input id="qA" class="ltr" type="number" inputmode="numeric" min="0" step="500" placeholder="نرخ (دینار)" aria-label="نرخ">
       </div>
-      <div class="qchips" id="qChips" aria-label="زێدەکرنا زویی">
+      <div class="qchips" id="qChips" aria-label="زێدەکرنا ب لەز">
         <button type="button" data-add="1000">+1,000</button><button type="button" data-add="5000">+5,000</button><button type="button" data-add="10000">+10,000</button><button type="button" data-add="25000">+25,000</button>
       </div>
       <button class="btn-add" id="qBtn" type="submit">+ داهات</button>
@@ -154,7 +154,7 @@
   </section>
 
   <footer class="foot" data-view="more">
-    <p class="sync">ئەڤ لاپەڕە تنێ بۆ خودانییە. تۆمار تنێ د ڤی ئامێری دا دمینن، ژ بەر هندێ دەمەک دەمەک کۆپیەکێ ڤەگرە. بەشێ ئەندامان (index.html) ب کۆدێ تایبەت و کۆدکری دهێتە بەلاڤکرن.</p>
+    <p class="sync">ئەڤ لاپەڕە تنێ بۆ خودانییە. تۆمار تنێ د ڤی ئامێری دا دمینن، ژ بەر هندێ هەر دەمەکێ کۆپیەکێ ڤەگرە. بەشێ ئەندامان (index.html) ب کۆدێ تایبەت و کۆدکری دهێتە بەلاڤکرن.</p>
     <div class="tools">
       <button type="button" id="btnCloud">پاراستن و ڤەگەڕاندن ل GitHub</button>
       <button type="button" id="btnExport">کۆپیکرنا تۆمارا</button>
@@ -164,7 +164,7 @@
   </footer>
 </div>
 
-<!-- تابێن خوارێ: هەر تابەک لاپەڕەکا جیایە -->
+<!-- تابێن خوارێ: هەر تابەک لاپەڕەکا جودایە -->
 <nav class="tabs" id="tabs" aria-label="بەش">
   <button type="button" data-t="home" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>سەرەکی</button>
   <button type="button" data-t="members"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-4 3.2-6 6.5-6s5.9 2 6.5 6M16 5a3.5 3.5 0 010 7M18 14c2 .6 3.3 2.5 3.5 6"/></svg>ئەندام</button>
@@ -187,7 +187,7 @@
     <div class="err" id="eErr" role="alert"></div>
     <div class="sheet-acts">
       <button type="submit" class="go">پاشەکەفت</button>
-      <button type="button" class="cancel" id="eCancel">داخستن</button>
+      <button type="button" class="cancel" id="eCancel">گرتن</button>
     </div>
     <button type="button" class="e-del" id="eDel">ژێبرنا ئەڤ تۆمارێ</button>
   </form>
@@ -199,7 +199,7 @@
     <h2 id="fTitle">ئەندامێ نوی</h2>
     <div class="photo-pick">
       <button type="button" class="ph-btn" id="fPhotoBtn" aria-label="وێنەی ئەندامی هەلبژێرە"><span>+</span></button>
-      <div><b>وێنەی ئەندامی</b><small>نە پێدڤییە</small><button type="button" class="ph-del" id="fPhotoDel" hidden>لابردنا وێنەی</button></div>
+      <div><b>وێنەی ئەندامی</b><small>نە پێدڤییە</small><button type="button" class="ph-del" id="fPhotoDel" hidden>ژێبرنا وێنەی</button></div>
       <input type="file" id="fPhotoFile" accept="image/*" hidden>
     </div>
     <label for="fName">ناڤ *</label>
@@ -211,13 +211,13 @@
           <option value="1">1 هەیڤ</option>
           <option value="3">3 هەیڤ</option>
           <option value="6">6 هەیڤ</option>
-          <option value="12">ساڵەک</option>
+          <option value="12">سالەک</option>
         </select>
       </div>
     </div>
     <div class="two">
       <div><label for="fPhone">ژمارا مۆبایلێ</label><input id="fPhone" class="ltr" type="tel" inputmode="tel" autocomplete="off"></div>
-      <div><label for="fStart">بەرواری دەستپێکرنێ</label><input id="fStart" class="ltr" type="date"></div>
+      <div><label for="fStart">ڕێکەفتا دەستپێکرنێ</label><input id="fStart" class="ltr" type="date"></div>
     </div>
     <div class="three">
       <div><label for="fSnap">Snapchat</label><input id="fSnap" class="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="username"></div>
@@ -247,7 +247,7 @@
     <div class="err" id="fErr" role="alert"></div>
     <div class="sheet-acts">
       <button type="submit" class="go" id="fSave">پاشەکەفت</button>
-      <button type="button" class="cancel" id="fCancel">پاشگەز بوون</button>
+      <button type="button" class="cancel" id="fCancel">هەلوەشاندن</button>
     </div>
   </form>
 </div>
@@ -257,11 +257,11 @@
   <div class="sheet prog" id="prog" role="dialog" aria-modal="true" aria-labelledby="pTitle">
     <h2 id="pTitle">بەرنامەیا ڕاهێنانێ</h2>
     <div class="wtabs" id="pTabs" role="tablist" aria-label="ڕۆژێن هەفتێ"></div>
-    <label for="pFocus">ئەڤ ڕۆژە چ دکەت؟ (بۆ نموونە: سنگ و ترایسێپس)</label>
+    <label for="pFocus">ئەڤ ڕۆژە چ ڕاهێنان دهێتە کرن؟ (بۆ نموونە: سنگ و ترایسێپس)</label>
     <input id="pFocus" autocomplete="off">
     <div class="exl" id="pEx"></div>
     <button type="button" class="addday" id="pAdd">+ ڕاهێنانەک</button>
-    <label for="pNote">تێبینی بۆ ڤی ڕۆژی (نەچاری)</label>
+    <label for="pNote">تێبینی بۆ ڤی ڕۆژی (نە پێدڤییە)</label>
     <textarea id="pNote"></textarea>
     <div class="plan-h" id="pCopyBox"><span>کۆپیکرن</span>
       <select id="pCopy" aria-label="کۆپیکرنا بەرنامەیێ ژ ئەندامەکێ دی"><option value="">کۆپیکرنا بەرنامەیێ ژ ئەندامەکێ دی…</option></select>
@@ -271,7 +271,7 @@
     <div class="err" id="pErr" role="alert"></div>
     <div class="sheet-acts">
       <button type="button" class="go" id="pSave">پاشەکەفت</button>
-      <button type="button" class="cancel" id="pCancel">داخستن</button>
+      <button type="button" class="cancel" id="pCancel">گرتن</button>
     </div>
   </div>
 </div>
@@ -280,18 +280,18 @@
 <div class="veil" id="veil3" hidden>
   <form class="sheet" id="bform" role="dialog" aria-modal="true" aria-labelledby="bTitle" novalidate>
     <h2 id="bTitle">پاراستنا تۆمارا ل GitHub</h2>
-    <p class="muted-p">تۆمارێن ئەندامان ب پاسۆردەکێ دهێنە کۆدکرن و ل Repository وەک فایلێ <b dir="ltr">forge-backup.json</b> دهێنە پاراستن. ئەگەر مۆبایل یان براوزەر بهێتە گوهۆڕین، ب ڤی پاسۆردی دشێی هەمیان ڤەگەڕینی. پشتی جارا یەکێ، هەر جارەکا تو بگوهۆڕی دێ ئۆتۆماتیک دووبارە هێتە پاراستن.</p>
+    <p class="muted-p">تۆمارێن ئەندامان ب پاسۆردەکێ دهێنە کۆدکرن و ل Repository وەک فایلێ <b dir="ltr">forge-backup.json</b> دهێنە پاراستن. ئەگەر مۆبایل یان براوزەر بهێتە گوهۆڕین، ب ڤی پاسۆردی دشێی هەمیان ڤەگەڕینی. پشتی جارا ئێکێ، هەر جارەکا تو بگوهۆڕی دێ ب ئۆتۆماتیکی جارەکا دی هێتە پاراستن.</p>
     <label for="bPass">پاسۆردێ پاراستنێ (کێم 10 پیت و ژمارە)</label>
     <input id="bPass" class="ltr" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div id="bConfirmBox">
-      <label for="bPass2">پاسۆردی دووبارە بنڤیسە</label>
+      <label for="bPass2">پاسۆردی جارەکا دی بنڤیسە</label>
       <input id="bPass2" class="ltr" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
     </div>
-    <p class="muted-p warnp">ئاگەهداری: ئەگەر پاسۆردی ژبیر بکەی، کەس ناشێت کۆپیێ ڤەکەت. ل جهەکێ ب ئاسایش بنڤیسە. ئەڤ پاسۆرد ژ تۆکنا GitHub جیاوازە.</p>
+    <p class="muted-p warnp">ئاگەهداری: ئەگەر تو پاسۆردی ژبیر بکەی، چ کەس نەشێت کۆپیێ ڤەکەت. ل جهەکێ ب ئاسایش بنڤیسە. ئەڤ پاسۆرد ژ تۆکنا GitHub جودایە.</p>
     <div class="err" id="bErr" role="alert"></div>
     <div class="sheet-acts">
-      <button type="submit" class="go" id="bSave">پاراستن ئێستا</button>
-      <button type="button" class="cancel" id="bClose">داخستن</button>
+      <button type="submit" class="go" id="bSave">پاراستن نوکە</button>
+      <button type="button" class="cancel" id="bClose">گرتن</button>
     </div>
     <div class="tools" style="margin-top:14px"><button type="button" id="bRestore">ڤەگەڕاندن ژ کۆپیا GitHub</button></div>
   </form>
@@ -301,9 +301,9 @@
 <div class="veil" id="veil4" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="lTitle">
     <h2 id="lTitle">تۆمارا گوهۆڕینان</h2>
-    <p class="muted-p">هەر گوهۆڕینەکا تو یان ئەندامەک بکەت لێرە دهێتە نڤیسین. ناهێتە ژێبرن.</p>
+    <p class="muted-p">هەر گوهۆڕینەکا تو یان ئەندامەک بکەت ل ڤێرێ دهێتە نڤیسین. ناهێتە ژێبرن.</p>
     <div class="loglist" id="logList"></div>
-    <div class="sheet-acts"><button type="button" class="cancel" id="logClose">داخستن</button></div>
+    <div class="sheet-acts"><button type="button" class="cancel" id="logClose">گرتن</button></div>
   </div>
 </div>
 <div class="res" id="res" hidden><div class="res-b"><i id="resI"></i><h3 id="resN"></h3><p id="resT"></p><button type="button" id="resX">باشە</button></div></div>
@@ -315,7 +315,7 @@
   function say(t) { var e = document.getElementById('gErr'); if (e) e.textContent = t; }
   window.addEventListener('error', function (ev) {
     var t = ev.target;
-    if (t && t.tagName === 'SCRIPT') { say('فایلا ' + (t.getAttribute('src') || '').split('?')[0] + ' ل سەر GitHub نەهاتە دیتن. ناڤێ فایلی دڤێت وەک خۆ بیت (ب پیتێن بچووک).'); return; }
+    if (t && t.tagName === 'SCRIPT') { say('فایلا ' + (t.getAttribute('src') || '').split('?')[0] + ' ل سەر GitHub نەهاتە دیتن. ناڤێ فایلی دڤێت وەک خۆ بیت (ب پیتێن بچویک).'); return; }
     say('خەلەتیا کۆدی: ' + (ev.message || '') + ' (' + String(ev.filename || '').split('/').pop().split('?')[0] + ':' + (ev.lineno || '') + ')');
   }, true);
   document.getElementById('gateForm').addEventListener('submit', function (e) {
